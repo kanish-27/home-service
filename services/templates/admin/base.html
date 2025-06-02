@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Home Service{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-nav-tabs {
+        background: white;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .admin-nav-tabs .nav-link {
+        color: #6c757d;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 20px;
+        margin: 0 5px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .admin-nav-tabs .nav-link:hover,
+    .admin-nav-tabs .nav-link.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .admin-nav-tabs .nav-link i {
+        margin-right: 8px;
+    }
+
+    .service-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: none;
+        transition: transform 0.3s ease;
+        overflow: hidden;
+    }
+
+    .service-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .stat-card .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 60px 0;
+        margin-bottom: 40px;
+        text-align: center;
+    }
+
+    .page-header h1 {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .page-header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .table-modern {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+
+    .table-modern thead {
+        background: #f8f9fa;
+    }
+
+    .table-modern th {
+        border: none;
+        padding: 20px;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .table-modern td {
+        border: none;
+        padding: 20px;
+        vertical-align: middle;
+    }
+
+    .status-badge {
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-confirmed { background: #d1ecf1; color: #0c5460; }
+    .status-completed { background: #d4edda; color: #155724; }
+    .status-cancelled { background: #f8d7da; color: #721c24; }
+
+    .admin-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #495057;
+    }
+
+    /* Admin Bookings Specific Styles */
+    .admin-header {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+
+    .admin-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: none;
+        overflow: hidden;
+    }
+
+    .table-admin {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+
+    .table-admin thead {
+        background: #f8f9fa;
+    }
+
+    .table-admin th {
+        border: none;
+        padding: 15px 20px;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+    }
+
+    .table-admin td {
+        border: none;
+        padding: 15px 20px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+    }
+
+    .table-admin tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-admin tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .btn-admin {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 8px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .btn-admin:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    /* Status badges for rejected bookings */
+    .status-rejected {
+        background: #f8d7da;
+        color: #721c24;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <p>Manage your home service platform</p>
+    </div>
+</div>
+
+<!-- Admin Navigation -->
+<div class="container">
+    <div class="admin-nav-tabs">
+        <ul class="nav nav-pills justify-content-center">
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}"
+                   href="{% url 'services:admin_dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'admin_services' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'services:admin_services' %}">
+                    <i class="fas fa-tools"></i>Services
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'admin_bookings' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'services:admin_bookings' %}">
+                    <i class="fas fa-calendar-check"></i>Bookings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'admin_categories' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'services:admin_categories' %}">
+                    <i class="fas fa-tags"></i>Categories
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'admin_providers' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'services:admin_providers' %}">
+                    <i class="fas fa-users"></i>Providers
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'admin_reviews' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'services:admin_reviews' %}">
+                    <i class="fas fa-star"></i>Reviews
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% block admin_content %}
+    {% endblock %}
+</div>
+
+<!-- Back to Site Button -->
+<div class="container mt-5 mb-4">
+    <div class="text-center">
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary me-3">
+            <i class="fas fa-home me-2"></i>Back to Website
+        </a>
+        <a href="{% url 'account_logout' %}" class="btn btn-outline-danger">
+            <i class="fas fa-sign-out-alt me-2"></i>Logout
+        </a>
+    </div>
+</div>
+{% endblock %}

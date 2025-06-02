@@ -1,0 +1,860 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ service.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Card Styles */
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Profile Image Styles */
+    .profile-image {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .profile-placeholder {
+        width: 50px;
+        height: 50px;
+        background-color: #f8f9fa;
+        border-radius: 50%;
+    }
+
+    /* Loading Spinner */
+    .loading-spinner {
+        display: none;
+        position: relative;
+    }
+
+    .loading-spinner.active {
+        display: block;
+    }
+
+    /* Sticky Card */
+    .sticky-card {
+        top: 20px;
+        position: sticky;
+        z-index: 1000;
+    }
+
+    /* Carousel Styles */
+    .carousel-inner {
+        height: 400px;
+        overflow: hidden;
+        border-radius: 10px;
+        position: relative;
+    }
+
+    .carousel-item {
+        height: 100%;
+    }
+
+    .carousel-item img {
+        object-fit: cover;
+        height: 100%;
+        width: 100%;
+    }
+
+    .carousel-item .bg-light {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+    }
+
+    /* Progress Bar Styles */
+    .progress {
+        height: 6px;
+        background-color: #e9ecef;
+        border-radius: 3px;
+    }
+
+    .progress-bar {
+        transition: width 0.3s ease-in-out;
+        border-radius: 3px;
+    }
+
+    .rating-bar-5 {
+        background-color: #ffc107;
+    }
+
+    .rating-bar-4 {
+        background-color: #ff9800;
+    }
+
+    .rating-bar-3 {
+        background-color: #ff5722;
+    }
+
+    .rating-bar-2 {
+        background-color: #f44336;
+    }
+
+    .rating-bar-1 {
+        background-color: #e53935;
+    }
+
+    /* Reviews List */
+    .reviews-list {
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 1rem;
+        border-radius: 8px;
+        background-color: #fff;
+    }
+
+    /* Toast Styles */
+    .toast {
+        width: 300px;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1050;
+    }
+
+    .toast-header {
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+
+    .toast-body {
+        padding: 0.75rem 1rem;
+    }
+
+    /* Share Buttons */
+    .share-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    /* Error Handling */
+    .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .image-error {
+        background-color: #f8f9fa;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Toasts -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+            <strong class="me-auto">Error</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            <!-- Error message will be inserted here -->
+        </div>
+    </div>
+
+    <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            <!-- Success message will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Service Images Carousel -->
+            <div id="serviceCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+                <div class="carousel-inner rounded">
+                    {% if service.images.all %}
+                        {% for image in service.images.all %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ image.image.url }}" class="d-block w-100 h-100" alt="{{ service.name }}">
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="carousel-item active">
+                            <div class="bg-light">
+                                <i class="fas fa-tools fa-5x text-muted"></i>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                {% if service.images.all|length > 1 %}
+                    <button class="carousel-control-prev" type="button" data-bs-target="#serviceCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#serviceCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                {% endif %}
+            </div>
+
+            <!-- Service Details -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="h3 mb-1">{{ service.name }}</h1>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="text-warning me-2">
+                                    {% if service.average_rating %}
+                                        {% for i in "12345"|make_list %}
+                                            {% if forloop.counter <= service.average_rating|floatformat:0|add:0 %}
+                                                <i class="fas fa-star"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="text-muted ms-1">({{ service.review_count }} reviews)</span>
+                                    {% else %}
+                                        <span class="text-muted">No reviews yet</span>
+                                    {% endif %}
+                                </div>
+                                <div class="me-3">
+                                    <div class="rounded-circle bg-light profile-placeholder d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-user text-muted"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ service.provider_name }}</h6>
+                                    <small class="text-muted">Service Provider</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <h3 class="text-primary mb-0">₹{{ service.price }}</h3>
+                            <small class="text-muted">per service</small>
+
+                    <div class="mb-4">
+                        <h5 class="mb-3">About This Service</h5>
+                        <p class="mb-0">{{ service.description|linebreaksbr }}</p>
+                    </div>
+
+                    {% if service.features %}
+                        <div class="mb-4">
+                            <h5 class="mb-3">Service Features</h5>
+                            <ul class="list-unstyled">
+                                {% for feature in service.features %}
+                                    <li class="mb-2">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        {{ feature }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    {% if service.what_included %}
+                        <div class="mb-4">
+                            <h5 class="mb-3">What's Included</h5>
+                            <ul class="list-unstyled">
+                                {% for item in service.what_included %}
+                                    <li class="mb-2">
+                                        <i class="fas fa-plus-circle text-primary me-2"></i>
+                                        {{ item }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    <div class="row g-3 mb-4">
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="me-2">5</span>
+                            <div class="progress rating-progress">
+                                <div class="progress-bar rating-bar-5" role="progressbar"
+                                     data-width="{{ service.rating_percentages.5|default:0 }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"></div>
+                            </div>
+                            <span class="ms-2 text-muted">{{ service.rating_counts.5|default:0 }}</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="me-2">4</span>
+                            <div class="progress rating-progress">
+                                <div class="progress-bar rating-bar-4" role="progressbar"
+                                     data-width="{{ service.rating_percentages.4|default:0 }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"></div>
+                            </div>
+                            <span class="ms-2 text-muted">{{ service.rating_counts.4|default:0 }}</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="me-2">3</span>
+                            <div class="progress rating-progress">
+                                <div class="progress-bar rating-bar-3" role="progressbar"
+                                     data-width="{{ service.rating_percentages.3|default:0 }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"></div>
+                            </div>
+                            <span class="ms-2 text-muted">{{ service.rating_counts.3|default:0 }}</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="me-2">2</span>
+                            <div class="progress rating-progress">
+                                <div class="progress-bar rating-bar-2" role="progressbar"
+                                     data-width="{{ service.rating_percentages.2|default:0 }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"></div>
+                            </div>
+                            <span class="ms-2 text-muted">{{ service.rating_counts.2|default:0 }}</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="me-2">1</span>
+                            <div class="progress rating-progress">
+                                <div class="progress-bar rating-bar-1" role="progressbar"
+                                     data-width="{{ service.rating_percentages.1|default:0 }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"></div>
+                            </div>
+                            <span class="ms-2 text-muted">{{ service.rating_counts.1|default:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Card -->
+        <div class="col-lg-4">
+            <div class="card sticky-top sticky-card">
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary loading-spinner" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <!-- Toasts -->
+                    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                        <!-- Error Toast -->
+                        <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="toast-header bg-danger text-white">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong class="me-auto">Error</strong>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                            <div class="toast-body">
+                                An error occurred
+                            </div>
+                        </div>
+                        <!-- Success Toast -->
+                        <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="toast-header bg-success text-white">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong class="me-auto">Success</strong>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                            <div class="toast-body">
+                                Action completed successfully
+                            </div>
+                        </div>
+                    </div>
+                    <h5 class="card-title mb-4">Book This Service</h5>
+
+                    <div class="d-grid gap-2">
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'services:book_service' service.id %}" class="btn btn-primary btn-lg">
+                                <i class="far fa-calendar-alt me-2"></i> Book Now
+                            </a>
+                        {% else %}
+                            <a href="{% url 'account_login' %}?next={% url 'services:book_service' service.id %}"
+                               class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2" aria-hidden="true" title="Sign In"></i> Sign in to Book
+                            </a>
+                        {% endif %}
+
+                        <a href="{% url 'services:book_service' service.id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="far fa-calendar-alt me-2" aria-hidden="true" title="Booking Options"></i> View Booking Options
+                        </a>
+
+                        <button type="button" class="btn btn-outline-secondary">
+                            <i class="far fa-envelope me-2" aria-hidden="true" title="Message"></i> Message Provider
+                        </button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6 class="text-uppercase text-muted mb-3">Service Details</h6>
+                        <ul class="list-unstyled">
+                            <li class="d-flex justify-content-between py-2">
+                                <span class="text-muted">Price:</span>
+                                <span class="fw-bold">₹{{ service.price }}</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2">
+                                <span class="text-muted">Duration:</span>
+                                <span class="fw-bold">{{ service.duration }} hours</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2">
+                                <span class="text-muted">Category:</span>
+                                <span class="fw-bold">{{ service.category_name }}</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2">
+                                <span class="text-muted">Provider:</span>
+                                <span class="fw-bold">{{ service.provider_name }}</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6 class="text-uppercase text-muted mb-3">Share This Service</h6>
+                        <div class="d-flex gap-2">
+                            <a href="#" class="btn btn-sm btn-outline-secondary">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-secondary">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-secondary">
+                                <i class="fab fa-linkedin-in"></i>
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-secondary">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-link"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Services -->
+<div class="mt-4">
+    <h5 class="mb-3">Related Services</h5>
+    <div class="row g-3">
+        {% if related_services %}
+            {% for related in related_services %}
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">{{ related.name }}</h6>
+                                <span class="badge bg-primary">₹{{ related.price }}</span>
+                            </div>
+                            <div class="text-muted small mb-3">
+                                <i class="fas fa-clock me-2"></i>{{ related.duration }} hours
+                            </div>
+                            <p class="text-muted small mb-3">{{ related.description|truncatewords:15 }}</p>
+                            <div class="text-warning small mb-2">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= related.average_rating|floatformat:0|add:0 %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="text-muted ms-1">({{ related.review_count }})</span>
+                            </div>
+                            <a href="{% url 'services:service_detail' related.id %}" class="btn btn-sm btn-outline-primary">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    No related services found
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Reviews -->
+<div class="mt-4">
+    <h5 class="mb-3">Customer Reviews</h5>
+    <div class="reviews-list">
+        {% if service.reviews %}
+            {% for review in service.reviews %}
+                <div class="border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            <h6 class="mb-0">{{ review.user_name }}</h6>
+                            <div class="text-warning">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star" style="color: #ffc107;"></i>
+                                    {% else %}
+                                        <i class="far fa-star" style="color: #ffc107;"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="text-muted ms-1">({{ review.rating }}/5)</span>
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ review.date|date:"F j, Y" }}</small>
+                    </div>
+                    <p class="mb-0">{{ review.comment|linebreaksbr }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                <p class="text-muted mb-0">No reviews yet. Be the first to review this service!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Toast Components -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-danger text-white">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <strong class="me-auto">Error</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body text-white">
+            An error occurred
+        </div>
+    </div>
+    <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body text-white">
+            Operation successful
+        </div>
+    </div>
+</div>
+
+<!-- Provider Info Modal -->
+{% if provider %}
+<div class="modal fade" id="providerInfoModal" tabindex="-1" aria-labelledby="providerInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="providerInfoModalLabel">About the Provider</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        {% if provider.profile_picture %}
+                            <img src="{{ provider.profile_picture.url }}"
+                                 class="img-fluid rounded-circle mb-3"
+                                 alt="{{ provider.get_full_name }}"
+                                 style="width: 150px; height: 150px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mb-3"
+                                 style="width: 150px; height: 150px; margin: 0 auto;">
+                                <i class="fas fa-user fa-4x text-muted" aria-hidden="true" title="No profile picture"></i>
+                            </div>
+                        {% endif %}
+                        <h5>{{ provider.get_full_name|default:provider.email }}</h5>
+                        <p class="text-muted">Service Provider</p>
+
+                        <div class="d-flex justify-content-center gap-2 mb-3">
+                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                <i class="far fa-envelope"></i> Message
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-phone-alt"></i> Call
+                            </a>
+                        </div>
+
+                        <div class="text-start">
+                            <p class="mb-1">
+                                <i class="fas fa-map-marker-alt text-muted me-2" aria-hidden="true" title="Location"></i>
+                                {{ provider.user_profile.location|default:"Location not specified" }}
+                            </p>
+                            <p class="mb-1">
+                                <i class="fas fa-clock text-muted me-2" aria-hidden="true" title="Availability"></i>
+                                {{ provider.availability|default:"Availability not specified" }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <h6>About Me</h6>
+                        <p class="mb-4">
+                            {{ provider.bio|default:"No bio available." }}
+                        </p>
+
+                        <h6>Services Offered</h6>
+                        <div class="row g-2 mb-4">
+                            {% for provider_service in provider.services.all|slice:"6" %}
+                                <div class="col-6">
+                                    <div class="card h-100">
+                                        <div class="card-body p-2">
+                                            <h6 class="card-title mb-1">
+                                                <a href="{% url 'services:service_detail' provider_service.id %}" class="text-decoration-none">
+                                                    {{ provider_service.name }}
+                                                </a>
+                                            </h6>
+                                            <p class="card-text text-muted small mb-1">
+                                                ₹{{ provider_service.price }}
+                                            </p>
+                                            <div class="text-warning small">
+                                                {% if provider_service.average_rating %}
+                                                    {% for i in "12345"|make_list %}
+                                                        {% if forloop.counter <= provider_service.average_rating|floatformat:0|add:0 %}
+                                                            <i class="fas fa-star"></i>
+                                                        {% else %}
+                                                            <i class="far fa-star"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    <span class="text-muted ms-1">({{ provider_service.review_count }})</span>
+                                                {% else %}
+                                                    <span class="text-muted">No reviews yet</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Reviews</h6>
+                            <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
+
+                        <div class="reviews-list" style="max-height: 200px; overflow-y: auto;">
+                            {% for review in provider.reviews.all|slice:"3" %}
+                                <div class="border-bottom pb-3 mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <h6 class="mb-0">{{ review.service.name }}</h6>
+                                        <div class="text-warning">
+                                            {% for i in "12345"|make_list %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-1">{{ review.user.get_full_name|default:review.user.email }}</p>
+                                    <p class="small mb-0">{{ review.comment|truncatewords:20 }}</p>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted small">No reviews yet.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{% url 'users:provider_detail' provider.username %}" class="btn btn-primary">
+                    View Full Profile
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Error handling and loading states
+    class ServiceDetailHandler {
+        constructor() {
+            this.loadingSpinner = document.querySelector('.loading-spinner');
+            this.errorToast = document.getElementById('errorToast');
+            this.successToast = document.getElementById('successToast');
+
+            // Initialize components
+            this.carousel = new bootstrap.Carousel(document.getElementById('serviceCarousel'), {
+                interval: 5000,
+                touch: true
+            });
+
+            this.initializeEventListeners();
+        }
+
+        initializeEventListeners() {
+            // Image loading error handling
+            document.querySelectorAll('img').forEach(img => {
+                img.addEventListener('error', () => {
+                    img.src = '/static/images/default-placeholder.jpg';
+                    this.showError('Failed to load image');
+                    img.classList.add('image-error');
+                });
+            });
+
+            // Booking button handling
+            document.querySelectorAll('.btn-book-service').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.handleBooking(button);
+                });
+            });
+
+            // Scroll handling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = document.querySelector(anchor.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Modal handling
+            document.querySelectorAll('[data-bs-toggle="modal"]').forEach(trigger => {
+                trigger.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const modalId = trigger.getAttribute('data-bs-target');
+                    const modal = new bootstrap.Modal(document.querySelector(modalId));
+                    modal.show();
+                });
+            });
+
+            // Share buttons handling
+            document.querySelectorAll('.share-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const url = window.location.href;
+                    const title = document.title;
+
+                    if (btn.classList.contains('facebook')) {
+                        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+                    } else if (btn.classList.contains('twitter')) {
+                        window.open(`https://twitter.com/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
+                    } else if (btn.classList.contains('whatsapp')) {
+                        window.open(`https://wa.me/?text=${encodeURIComponent(title + '\n' + url)}`, '_blank');
+                    }
+                });
+            });
+        }
+
+        handleBooking(button) {
+            try {
+                this.showLoading();
+
+                // Validate button state
+                if (button.disabled) return;
+
+                // Get booking URL
+                const url = button.getAttribute('href');
+                if (!url) {
+                    this.showError('Invalid booking URL');
+                    return;
+                }
+
+                // Disable button and show loading
+                button.disabled = true;
+
+                // Simulate booking process
+                setTimeout(() => {
+                    try {
+                        this.hideLoading();
+                        this.showSuccess('Booking initiated successfully');
+                        // Redirect to booking page
+                        window.location.href = url;
+                    } catch (error) {
+                        this.showError('Failed to redirect to booking page');
+                        console.error('Redirect error:', error);
+                    } finally {
+                        button.disabled = false;
+                    }
+                }, 1000);
+            } catch (error) {
+                this.hideLoading();
+                this.showError('An error occurred while processing your booking');
+                console.error('Booking error:', error);
+                button.disabled = false;
+            }
+        }
+
+        showLoading() {
+            if (this.loadingSpinner) {
+                this.loadingSpinner.classList.add('active');
+            }
+        }
+
+        hideLoading() {
+            if (this.loadingSpinner) {
+                this.loadingSpinner.classList.remove('active');
+            }
+        }
+
+        showError(message) {
+            if (this.errorToast) {
+                this.errorToast.querySelector('.toast-body').textContent = message;
+                const toast = new bootstrap.Toast(this.errorToast, {
+                    autohide: true,
+                    delay: 5000
+                });
+                toast.show();
+            }
+        }
+
+        showSuccess(message) {
+            if (this.successToast) {
+                this.successToast.querySelector('.toast-body').textContent = message;
+                const toast = new bootstrap.Toast(this.successToast, {
+                    autohide: true,
+                    delay: 3000
+                });
+                toast.show();
+            }
+        }
+    }
+
+    // Initialize the handler when the DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize progress bars
+        const progressBars = document.querySelectorAll('.progress-bar');
+        progressBars.forEach(bar => {
+            const width = bar.getAttribute('data-width');
+            if (width) {
+                bar.style.width = `${width}%`;
+                bar.setAttribute('aria-valuenow', width);
+            }
+        });
+
+        // Initialize toasts
+        const errorToast = new bootstrap.Toast(document.getElementById('errorToast'), {
+            autohide: true,
+            delay: 5000
+        });
+        const successToast = new bootstrap.Toast(document.getElementById('successToast'), {
+            autohide: true,
+            delay: 3000
+        });
+
+        // Initialize service handler
+        new ServiceDetailHandler();
+    });
+</script>
+{% endblock %}

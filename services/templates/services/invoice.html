@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Invoice - {{ invoice.invoice_number }} - HomeService{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    {% if invoice %}
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Invoice Header -->
+            <div class="card shadow-sm mb-4" id="invoice-content">
+                <div class="card-header bg-primary text-white d-print-none">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">
+                                <i class="fas fa-file-invoice me-2"></i>Invoice
+                            </h3>
+                        </div>
+                        <div class="col-auto">
+                            <button onclick="window.print()" class="btn btn-light me-2">
+                                <i class="fas fa-print me-1"></i>Print
+                            </button>
+                            <a href="{% url 'services:invoice_download' booking.id %}" class="btn btn-success">
+                                <i class="fas fa-download me-1"></i>Download PDF
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Company Header -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h2 class="text-primary mb-1">HomeService</h2>
+                            <p class="text-muted mb-0">Professional Home Services</p>
+                            <p class="text-muted mb-0">India</p>
+                            <p class="text-muted mb-0">Email: kanishkrishna.jp2024@cse.ac.in</p>
+                            <p class="text-muted">Phone: +91 7708750455</p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <h3 class="text-primary">INVOICE</h3>
+                            <p class="mb-1"><strong>Invoice #:</strong> {{ invoice.invoice_number }}</p>
+                            <p class="mb-1"><strong>Date:</strong> {{ invoice.generated_at|date:"M d, Y" }}</p>
+                            <p class="mb-1"><strong>Booking ID:</strong> BK-{{ booking.id|stringformat:"06d" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Customer & Service Details -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="text-primary mb-3">Bill To:</h5>
+                            <p class="mb-1"><strong>{{ booking.customer.get_full_name|default:booking.customer.email }}</strong></p>
+                            <p class="mb-1">{{ booking.customer.email }}</p>
+                            {% if booking.phone_number %}
+                            <p class="mb-1">Phone: {{ booking.phone_number }}</p>
+                            {% endif %}
+                            {% if booking.address %}
+                            <p class="mb-1">{{ booking.address }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-primary mb-3">Service Provider:</h5>
+                            <p class="mb-1"><strong>{{ booking.provider.get_full_name|default:booking.provider.email }}</strong></p>
+                            <p class="mb-1">{{ booking.provider.email }}</p>
+                            <p class="mb-1">Service Date: {{ booking.booking_date|date:"M d, Y g:i A" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Service Details Table -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>Service Description</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th class="text-end">Rate</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <strong>{{ booking.service.name|default:"Home Service" }}</strong>
+                                        {% if booking.special_instructions %}
+                                        <br><small class="text-muted">{{ booking.special_instructions }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-end">₹{{ invoice.subtotal|floatformat:2 }}</td>
+                                    <td class="text-end">₹{{ invoice.subtotal|floatformat:2 }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <!-- QR Code Section -->
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-qrcode me-2"></i>Service Access QR Code
+                                    </h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    {% if invoice.qr_code %}
+                                    <img src="{{ invoice.qr_code.url }}" alt="QR Code" class="img-fluid mb-2" style="max-width: 200px;">
+                                    {% else %}
+                                    <div class="bg-light p-4 mb-2">
+                                        <i class="fas fa-qrcode fa-4x text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                    <p class="small text-muted mb-0">
+                                        Show this QR code to the service provider for verification
+                                    </p>
+                                    <p class="small text-primary mb-0">
+                                        <strong>Access Code: {{ invoice.invoice_number|slice:"-8:" }}</strong>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-end"><strong>Subtotal:</strong></td>
+                                    <td class="text-end">₹{{ invoice.subtotal|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-end"><strong>GST (18%):</strong></td>
+                                    <td class="text-end">₹{{ invoice.tax_amount|floatformat:2 }}</td>
+                                </tr>
+                                <tr class="border-top">
+                                    <td class="text-end"><h5><strong>Total Amount:</strong></h5></td>
+                                    <td class="text-end"><h5><strong>₹{{ invoice.total_amount|floatformat:2 }}</strong></h5></td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Payment Status -->
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Payment Status:</strong> Paid
+                                {% if booking.payment %}
+                                <br><small>Transaction ID: {{ booking.payment.transaction_id }}</small>
+                                <br><small>Payment Method: {{ booking.payment.get_payment_method_display }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terms and Conditions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-primary">Terms & Conditions:</h6>
+                            <ul class="small text-muted">
+                                <li>This invoice is generated upon admin approval of your booking</li>
+                                <li>Please show the QR code to the service provider for verification</li>
+                                <li>Service cancellation must be done at least 2 hours before scheduled time</li>
+                                <li>For any queries, contact us at kanishkrishna.jp2024@cse.ac.in or +91 7708750455</li>
+                                <li>This is a computer-generated invoice and does not require a signature</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="row mt-4 pt-3 border-top">
+                        <div class="col-12 text-center">
+                            <p class="text-muted mb-0">Thank you for choosing HomeService!</p>
+                            <p class="small text-muted">For support: kanishkrishna.jp2024@cse.ac.in | +91 7708750455</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row d-print-none">
+                <div class="col-md-3 mb-3">
+                    <a href="{% url 'user_dashboard' %}" class="btn btn-primary w-100">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <a href="{% url 'services:booking_list' %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-list me-2"></i>My Bookings
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <button onclick="window.print()" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-print me-2"></i>Print Invoice
+                    </button>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <a href="{% url 'services:invoice_download' booking.id %}" class="btn btn-success w-100">
+                        <i class="fas fa-download me-2"></i>Download PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                <h4>Invoice Not Available</h4>
+                <p>Invoice is only available for approved and paid bookings.</p>
+                <a href="{% url 'services:booking_list' %}" class="btn btn-primary">View My Bookings</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Print Styles -->
+<style>
+@media print {
+    .d-print-none {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .card-header {
+        background-color: #007bff !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact;
+    }
+    
+    .table-primary {
+        background-color: #b3d7ff !important;
+        -webkit-print-color-adjust: exact;
+    }
+    
+    .text-primary {
+        color: #007bff !important;
+        -webkit-print-color-adjust: exact;
+    }
+    
+    .alert-success {
+        background-color: #d4edda !important;
+        border-color: #c3e6cb !important;
+        -webkit-print-color-adjust: exact;
+    }
+    
+    body {
+        font-size: 12px;
+    }
+}
+</style>
+{% endblock %}

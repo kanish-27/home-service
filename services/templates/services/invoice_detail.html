@@ -1,0 +1,450 @@
+{% extends 'services/base.html' %}
+
+{% block title %}Invoice Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .invoice-header {
+        background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    .invoice-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .qr-code-section {
+        text-align: center;
+        padding: 2rem;
+        background: white;
+        border: 2px dashed #20c997;
+        border-radius: 10px;
+    }
+    
+    .amount-breakdown {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+    }
+    
+    .total-amount {
+        background: #20c997;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .download-btn {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        color: white;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    
+    .download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        color: white;
+    }
+    
+    .status-badge {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+        border-radius: 20px;
+    }
+
+    /* Print Styles - Only show invoice content when printing */
+    @media print {
+        /* Hide everything except the invoice content */
+        body * {
+            visibility: hidden;
+        }
+
+        /* Show only the invoice container and its contents */
+        .container-fluid,
+        .container-fluid * {
+            visibility: visible;
+        }
+
+        /* Hide navigation, buttons, and non-essential elements */
+        .navbar,
+        .download-btn,
+        .btn,
+        .breadcrumb,
+        .footer,
+        .sidebar,
+        .header,
+        nav,
+        .navigation,
+        .workflow-section {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        /* Position the invoice for printing */
+        .container-fluid {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Optimize print layout */
+        .invoice-header {
+            background: #20c997 !important;
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+            margin-bottom: 1rem !important;
+            padding: 1rem !important;
+        }
+
+        .invoice-section {
+            background: #f8f9fa !important;
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+            margin-bottom: 1rem !important;
+            padding: 1rem !important;
+        }
+
+        /* Ensure proper page breaks */
+        .invoice-section {
+            page-break-inside: avoid;
+        }
+
+        /* Optimize table printing */
+        table {
+            page-break-inside: avoid;
+        }
+
+        .amount-breakdown {
+            background: white !important;
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .total-amount {
+            background: #20c997 !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+
+        /* Ensure QR code section is visible in print */
+        .qr-code-section {
+            background: white !important;
+            border: 2px dashed #20c997 !important;
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+
+        /* Remove unnecessary spacing for print */
+        .row,
+        .col-lg-8,
+        .col-lg-4 {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+
+        /* Adjust layout for print */
+        .col-lg-8 {
+            width: 70% !important;
+            float: left;
+        }
+
+        .col-lg-4 {
+            width: 30% !important;
+            float: right;
+        }
+
+        /* Hide download section */
+        .text-center.mt-4 {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block service_content %}
+<div class="container-fluid">
+    <!-- Invoice Header -->
+    <div class="invoice-header text-center">
+        <h1 class="mb-3">
+            <i class="fas fa-file-invoice me-2"></i>
+            Invoice Details
+        </h1>
+        {% if is_mongodb %}
+            <h3 class="mb-0">{{ invoice_data.invoice_number }}</h3>
+            <p class="mb-0">Generated on {{ invoice_data.generated_at|date:"F d, Y" }}</p>
+        {% else %}
+            <h3 class="mb-0">{{ invoice.invoice_number }}</h3>
+            <p class="mb-0">Generated on {{ invoice.generated_at|date:"F d, Y" }}</p>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <!-- Left Column: Invoice Details -->
+        <div class="col-lg-8">
+            <!-- Booking Information -->
+            <div class="invoice-section">
+                <h5 class="mb-3">
+                    <i class="fas fa-info-circle me-2 text-primary"></i>
+                    Booking Information
+                </h5>
+                
+                {% if is_mongodb %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Service:</strong> {{ service_data.name|default:"Service not found" }}</p>
+                            <p><strong>Provider:</strong>
+                                {% if provider_data.first_name or provider_data.last_name %}
+                                    {{ provider_data.first_name|default:"" }} {{ provider_data.last_name|default:"" }}
+                                {% else %}
+                                    {{ provider_data.email|default:"Provider not found" }}
+                                {% endif %}
+                            </p>
+                            <p><strong>Booking Date:</strong>
+                                {% if booking_data.booking_date %}
+                                    {{ booking_data.booking_date|date:"F d, Y" }}
+                                {% else %}
+                                    Date not specified
+                                {% endif %}
+                            </p>
+                            <p><strong>Phone:</strong> {{ booking_data.phone_number|default:"Not provided" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong>
+                                <span class="badge bg-success status-badge">Confirmed</span>
+                            </p>
+                            <p><strong>Payment:</strong>
+                                <span class="badge bg-success status-badge">Paid</span>
+                            </p>
+                            <p><strong>Address:</strong> {{ booking_data.address|default:"Not specified" }}</p>
+                            <p><strong>Special Instructions:</strong> {{ booking_data.special_instructions|default:"None" }}</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Service:</strong> {{ booking.service.name }}</p>
+                            <p><strong>Provider:</strong> {{ booking.provider.get_full_name|default:booking.provider.email }}</p>
+                            <p><strong>Booking Date:</strong> {{ booking.booking_date|date:"F d, Y" }}</p>
+                            <p><strong>Phone:</strong> {{ booking.phone_number|default:"Not provided" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong>
+                                <span class="badge bg-success status-badge">{{ booking.get_status_display }}</span>
+                            </p>
+                            <p><strong>Payment:</strong>
+                                <span class="badge bg-success status-badge">{{ booking.get_payment_status_display }}</span>
+                            </p>
+                            <p><strong>Address:</strong> {{ booking.address|default:"Not specified" }}</p>
+                            <p><strong>Special Instructions:</strong> {{ booking.special_instructions|default:"None" }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Amount Breakdown -->
+            <div class="invoice-section">
+                <h5 class="mb-3">
+                    <i class="fas fa-calculator me-2 text-primary"></i>
+                    Amount Breakdown
+                </h5>
+                
+                <div class="amount-breakdown">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            {% if is_mongodb %}
+                                <tr>
+                                    <td>Service Charge</td>
+                                    <td class="text-end">₹{{ invoice_data.subtotal|floatformat:2|default:"0.00" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>GST (18%)</td>
+                                    <td class="text-end">₹{{ invoice_data.tax_amount|floatformat:2|default:"0.00" }}</td>
+                                </tr>
+                                <tr class="total-amount">
+                                    <td><strong>Total Amount</strong></td>
+                                    <td class="text-end"><strong>₹{{ invoice_data.total_amount|floatformat:2|default:"0.00" }}</strong></td>
+                                </tr>
+                            {% elif invoice %}
+                                <tr>
+                                    <td>Service Charge</td>
+                                    <td class="text-end">₹{{ invoice.subtotal|default:"0.00" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>GST (18%)</td>
+                                    <td class="text-end">₹{{ invoice.tax_amount|default:"0.00" }}</td>
+                                </tr>
+                                <tr class="total-amount">
+                                    <td><strong>Total Amount</strong></td>
+                                    <td class="text-end"><strong>₹{{ invoice.total_amount|default:"0.00" }}</strong></td>
+                                </tr>
+                            {% elif booking %}
+                                <tr>
+                                    <td>Service Charge</td>
+                                    <td class="text-end">₹{{ booking_subtotal|default:"0.00" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>GST (18%)</td>
+                                    <td class="text-end">₹{{ booking_tax_amount|default:"0.00" }}</td>
+                                </tr>
+                                <tr class="total-amount">
+                                    <td><strong>Total Amount</strong></td>
+                                    <td class="text-end"><strong>₹{{ booking_total_amount|default:"0.00" }}</strong></td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td>Service Charge</td>
+                                    <td class="text-end">₹0.00</td>
+                                </tr>
+                                <tr>
+                                    <td>GST (18%)</td>
+                                    <td class="text-end">₹0.00</td>
+                                </tr>
+                                <tr class="total-amount">
+                                    <td><strong>Total Amount</strong></td>
+                                    <td class="text-end"><strong>₹0.00</strong></td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Download Actions -->
+            <div class="invoice-section">
+                <h5 class="mb-3">
+                    <i class="fas fa-download me-2 text-primary"></i>
+                    Download Options
+                </h5>
+                
+                <div class="d-flex gap-3 flex-wrap">
+                    {% if booking_id %}
+                        <a href="{% url 'services:invoice_download' booking_id %}" class="btn download-btn">
+                            <i class="fas fa-file-pdf me-2"></i>
+                            Download PDF Invoice
+                        </a>
+                    {% elif booking %}
+                        <a href="{% url 'services:invoice_download' booking.id %}" class="btn download-btn">
+                            <i class="fas fa-file-pdf me-2"></i>
+                            Download PDF Invoice
+                        </a>
+                    {% endif %}
+                    
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>
+                        Print Invoice
+                    </button>
+                    
+                    {% if booking_id %}
+                        <a href="{% url 'services:booking_detail' booking_id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Back to Booking
+                        </a>
+                    {% elif booking %}
+                        <a href="{% url 'services:booking_detail' booking.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Back to Booking
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: QR Code -->
+        <div class="col-lg-4">
+            <div class="qr-code-section">
+                <h5 class="mb-3 text-primary">
+                    <i class="fas fa-qrcode me-2"></i>
+                    Service Access QR Code
+                </h5>
+                
+                {% if is_mongodb %}
+                    <!-- Generate QR code for MongoDB invoice -->
+                    <div class="qr-placeholder mb-3">
+                        <i class="fas fa-qrcode fa-5x text-muted"></i>
+                        <p class="mt-2 text-muted">QR Code for Service Access</p>
+                    </div>
+                    <p class="small text-muted">
+                        Present this QR code to the service provider for verification.
+                        Invoice: {{ invoice_data.invoice_number }}
+                    </p>
+                {% else %}
+                    {% if invoice.qr_code %}
+                        <img src="{{ invoice.qr_code.url }}" alt="QR Code" class="img-fluid mb-3" style="max-width: 200px;">
+                    {% else %}
+                        <div class="qr-placeholder mb-3">
+                            <i class="fas fa-qrcode fa-5x text-muted"></i>
+                            <p class="mt-2 text-muted">QR Code for Service Access</p>
+                        </div>
+                    {% endif %}
+                    <p class="small text-muted">
+                        Present this QR code to the service provider for verification.
+                        Invoice: {{ invoice.invoice_number }}
+                    </p>
+                {% endif %}
+                
+                <div class="alert alert-info small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    <strong>Important:</strong> Keep this invoice and QR code safe. You'll need it when the service provider arrives.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="invoice-section mt-4">
+        <h5 class="mb-3">
+            <i class="fas fa-clipboard-list me-2 text-primary"></i>
+            What Happens Next?
+        </h5>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="d-flex align-items-start mb-3">
+                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                        <span class="fw-bold">1</span>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Service Provider Contact</h6>
+                        <p class="small text-muted mb-0">The service provider will contact you to confirm the appointment time.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="d-flex align-items-start mb-3">
+                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                        <span class="fw-bold">2</span>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Service Delivery</h6>
+                        <p class="small text-muted mb-0">Present this invoice and QR code when the service provider arrives.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh invoice status
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any JavaScript for invoice interactions here
+    console.log('Invoice page loaded successfully');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,403 @@
+{% extends 'services/base.html' %}
+
+{% block title %}Provider Dashboard{% endblock %}
+
+{% block service_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-2">Dashboard</h1>
+        <p class="text-muted mb-0">Welcome back, {{ request.user.get_full_name|default:request.user.username }}!</p>
+    </div>
+    <div>
+        <a href="{% url 'services:provider_service_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Add New Service
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-muted small mb-1">Total Earnings</h6>
+                        <h3 class="mb-0">₹{{ total_earnings|default:0|floatformat:2 }}</h3>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-circle">
+                        <i class="fas fa-rupee-sign text-primary"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-success small">
+                        <i class="fas fa-arrow-up me-1"></i> {{ earnings_change|default:0|floatformat:1 }}% from last month
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-muted small mb-1">Total Bookings</h6>
+                        <h3 class="mb-0">{{ total_bookings|default:0 }}</h3>
+                    </div>
+                    <div class="bg-info bg-opacity-10 p-3 rounded-circle">
+                        <i class="fas fa-calendar-check text-info"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-success small">
+                        <i class="fas fa-arrow-up me-1"></i> {{ bookings_change|default:0|floatformat:1 }}% from last month
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-muted small mb-1">Active Services</h6>
+                        <h3 class="mb-0">{{ active_services|default:0 }}</h3>
+                    </div>
+                    <div class="bg-success bg-opacity-10 p-3 rounded-circle">
+                        <i class="fas fa-tools text-success"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'services:provider_service_list' %}" class="small">
+                        View All <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-muted small mb-1">Average Rating</h6>
+                        <div class="d-flex align-items-center">
+                            <h3 class="mb-0 me-2">{{ average_rating|default:0|floatformat:1 }}</h3>
+                            <div class="text-warning">
+                                {% if average_rating %}
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= average_rating|floatformat:0|add:0 %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">No ratings yet</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 p-3 rounded-circle">
+                        <i class="fas fa-star text-warning"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="small">
+                        Based on {{ total_reviews|default:0 }} review{{ total_reviews|pluralize }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Upcoming Bookings -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Upcoming Bookings</h5>
+                <a href="{% url 'services:provider_booking_list' %}" class="btn btn-sm btn-outline-primary">
+                    View All
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if upcoming_bookings %}
+                    <div class="list-group list-group-flush">
+                        {% for booking in upcoming_bookings|slice:":5" %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3 text-center">
+                                            <div class="text-primary fw-bold">
+                                                {{ booking.booking_date|date:"M" }}
+                                            </div>
+                                            <div class="h4 mb-0">
+                                                {{ booking.booking_date|date:"d" }}
+                                            </div>
+                                            <div class="small text-muted">
+                                                {{ booking.booking_date|time:"h:i A" }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">{{ booking.service.name }}</h6>
+                                            <p class="mb-1 small text-muted">
+                                                <i class="fas fa-user me-1"></i>
+                                                {{ booking.user.get_full_name|default:booking.user.email }}
+                                            </p>
+                                            <span class="badge {% if booking.status == 'confirmed' %}bg-success{% elif booking.status == 'pending' %}bg-warning{% elif booking.status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %} small">
+                                                {{ booking.get_status_display }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h6 mb-1">${{ booking.total_amount|default:booking.service.price }}</div>
+                                        <a href="{% url 'services:provider_booking_detail' booking.id %}" class="btn btn-sm btn-outline-primary">
+                                            View
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="far fa-calendar-check fa-3x text-muted mb-3"></i>
+                        <h5>No Upcoming Bookings</h5>
+                        <p class="text-muted">You don't have any upcoming bookings.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Reviews -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Reviews</h5>
+                <a href="{% url 'services:provider_reviews' %}" class="btn btn-sm btn-outline-primary">
+                    View All
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_reviews %}
+                    <div class="list-group list-group-flush">
+                        {% for review in recent_reviews %}
+                            <div class="list-group-item">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0 me-3">
+                                        {% if review.booking.user.profile_picture %}
+                                            <img src="{{ review.booking.user.profile_picture.url }}"
+                                                 class="rounded-circle"
+                                                 alt="{{ review.booking.user.get_full_name }}"
+                                                 width="50" height="50" style="object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center"
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="fas fa-user text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <h6 class="mb-0">
+                                                {{ review.booking.user.get_full_name|default:review.booking.user.email }}
+                                            </h6>
+                                            <div class="text-warning">
+                                                {% for i in "12345"|make_list %}
+                                                    {% if forloop.counter <= review.rating %}
+                                                        <i class="fas fa-star"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <p class="mb-1">{{ review.comment|truncatewords:20 }}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                <i class="far fa-clock me-1"></i>
+                                                {{ review.created_at|timesince }} ago
+                                            </small>
+                                            <small>
+                                                <a href="{% url 'services:service_detail' review.booking.service.id %}" class="text-decoration-none">
+                                                    {{ review.booking.service.name }}
+                                                </a>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="far fa-star fa-3x text-muted mb-3"></i>
+                        <h5>No Reviews Yet</h5>
+                        <p class="text-muted">You haven't received any reviews yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="col-lg-4">
+        <!-- Quick Stats -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Quick Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">This Month's Bookings</span>
+                        <span class="fw-bold">{{ current_month_bookings|default:0 }}</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-primary" role="progressbar"
+                             style="width: {{ current_month_bookings_percent|default:0 }}%"
+                             aria-valuenow="{{ current_month_bookings_percent|default:0 }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">Booking Completion Rate</span>
+                        <span class="fw-bold">{{ completion_rate|default:0 }}%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar"
+                             style="width: {{ completion_rate|default:0 }}%"
+                             aria-valuenow="{{ completion_rate|default:0 }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">Response Rate</span>
+                        <span class="fw-bold">{{ response_rate|default:0 }}%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-info" role="progressbar"
+                             style="width: {{ response_rate|default:0 }}%"
+                             aria-valuenow="{{ response_rate|default:0 }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <a href="{% url 'services:provider_stats' %}" class="btn btn-outline-primary w-100">
+                        View Detailed Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Messages -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Messages</h5>
+                <a href="{% url 'messaging:inbox' %}" class="btn btn-sm btn-outline-primary">
+                    View All
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_messages %}
+                    <div class="list-group list-group-flush">
+                        {% for message in recent_messages %}
+                            <a href="{% url 'messaging:thread' message.thread.id %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-3">
+                                        {% if message.sender.profile_picture %}
+                                            <img src="{{ message.sender.profile_picture.url }}"
+                                                 class="rounded-circle"
+                                                 alt="{{ message.sender.get_full_name }}"
+                                                 width="40" height="40" style="object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center"
+                                                 style="width: 40px; height: 40px;">
+                                                <i class="fas fa-user text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">
+                                                {{ message.sender.get_full_name|default:message.sender.email }}
+                                            </h6>
+                                            <small class="text-muted">
+                                                {{ message.created_at|timesince }} ago
+                                            </small>
+                                        </div>
+                                        <p class="mb-0 text-truncate" style="max-width: 200px;">
+                                            {{ message.content|truncatewords:10 }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="far fa-comments fa-3x text-muted mb-3"></i>
+                        <h5>No Recent Messages</h5>
+                        <p class="text-muted">You don't have any messages yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'services:provider_service_create' %}" class="btn btn-outline-primary text-start mb-2">
+                        <i class="fas fa-plus me-2"></i> Add New Service
+                    </a>
+                    <a href="{% url 'services:provider_availability' %}" class="btn btn-outline-secondary text-start mb-2">
+                        <i class="far fa-calendar-alt me-2"></i> Update Availability
+                    </a>
+                    <a href="{% url 'services:provider_service_list' %}" class="btn btn-outline-secondary text-start mb-2">
+                        <i class="fas fa-tools me-2"></i> Manage Services
+                    </a>
+                    <a href="{% url 'services:provider_booking_list' %}" class="btn btn-outline-secondary text-start mb-2">
+                        <i class="fas fa-calendar-check me-2"></i> View All Bookings
+                    </a>
+                    <a href="{% url 'services:provider_profile' %}" class="btn btn-outline-secondary text-start">
+                        <i class="fas fa-user-edit me-2"></i> Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize any tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

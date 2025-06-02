@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Bookings - Home Service{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Customer Bookings</h2>
+            <p class="text-muted">View and manage all customer bookings</p>
+            
+            {% if bookings %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th>Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                            <tr>
+                                <td>
+                                    {% if booking.id %}
+                                        BK-{{ booking.id|stringformat:"06d" }}
+                                    {% else %}
+                                        BK-{{ forloop.counter|stringformat:"06d" }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ booking.customer.get_full_name|default:booking.customer.email }}
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if booking.status == 'pending' %}bg-warning
+                                        {% elif booking.status == 'confirmed' %}bg-success
+                                        {% elif booking.status == 'rejected' %}bg-danger
+                                        {% elif booking.status == 'completed' %}bg-primary
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ booking.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>₹{{ booking.total_amount|default:"0.00" }}</td>
+                                <td>{{ booking.booking_date|date:"M d, Y g:i A" }}</td>
+                                <td>{{ booking.address|truncatechars:50 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if bookings.has_other_pages %}
+                <nav aria-label="Bookings pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if bookings.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ bookings.previous_page_number }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ bookings.number }}</span>
+                        </li>
+                        
+                        {% if bookings.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ bookings.next_page_number }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+            {% else %}
+                <div class="alert alert-info">
+                    <h4>No Bookings Found</h4>
+                    <p>No customer bookings are available at the moment.</p>
+                </div>
+            {% endif %}
+            
+            <div class="mt-4">
+                <a href="{% url 'services:admin_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

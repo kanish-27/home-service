@@ -1,0 +1,591 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pending Bookings - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+
+    .booking-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .booking-card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .booking-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px 10px 0 0;
+        padding: 1rem;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .booking-body {
+        padding: 1.5rem;
+    }
+
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-approve {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        color: white;
+    }
+
+    .btn-reject {
+        background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+        border: none;
+        color: white;
+    }
+
+    .customer-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .booking-details {
+        background: #fff;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .no-bookings {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+
+    .search-box {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<div class="admin-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-0">
+                    <i class="fas fa-clock me-3"></i>Pending Bookings
+                </h1>
+                <p class="mb-0 mt-2">Review and approve customer booking requests</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="d-flex align-items-center justify-content-end">
+                    <div class="me-3">
+                        <span class="badge bg-warning fs-6">{{ total_pending }} Pending</span>
+                    </div>
+                    <a href="{% url 'services:admin_dashboard' %}" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Search Box -->
+    <div class="search-box">
+        <form method="GET" class="row g-3 align-items-center">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" name="search"
+                           value="{{ search_query }}"
+                           placeholder="Search by customer name, email, or address...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Search
+                    </button>
+                    {% if search_query %}
+                    <a href="{% url 'services:admin_pending_bookings' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Pending Bookings List -->
+    {% if pending_bookings %}
+        {% for booking in pending_bookings %}
+        <div class="booking-card" data-booking-index="{{ forloop.counter0 }}">
+            <div class="booking-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>{{ booking.customer.get_full_name }}
+                        </h5>
+                        <small class="text-muted">{{ booking.customer.email }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="status-badge bg-warning text-dark">
+                            <i class="fas fa-clock me-1"></i>{{ booking.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <small class="text-muted">
+                            <i class="far fa-calendar me-1"></i>{{ booking.created_at|date:"M d, Y H:i" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="booking-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="customer-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Booking Details</h6>
+                            <p><strong>Provider:</strong> {{ booking.provider.get_full_name|default:booking.provider.email }}</p>
+                            <p><strong>Date & Time:</strong> {{ booking.booking_date|date:"M d, Y H:i" }}</p>
+                            <p><strong>Amount:</strong> <span class="text-success fw-bold">₹{{ booking.total_amount }}</span></p>
+                            <p><strong>Phone:</strong> {{ booking.phone_number }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="booking-details">
+                            <h6><i class="fas fa-map-marker-alt me-2"></i>Service Address</h6>
+                            <p>{{ booking.address }}</p>
+
+                            {% if booking.special_instructions %}
+                            <h6><i class="fas fa-sticky-note me-2"></i>Special Instructions</h6>
+                            <p class="text-muted">{{ booking.special_instructions }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-approve" onclick="showApprovalModal({{ forloop.counter0 }})">
+                        <i class="fas fa-check me-1"></i>Approve Booking
+                    </button>
+                    <button type="button" class="btn btn-reject" onclick="showRejectionModal({{ forloop.counter0 }})">
+                        <i class="fas fa-times me-1"></i>Reject Booking
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="showBookingDetails({{ forloop.counter0 }})">
+                        <i class="far fa-eye me-1"></i>View Details
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Pagination -->
+        {% if pending_bookings.has_other_pages %}
+        <nav aria-label="Pending bookings pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if pending_bookings.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ pending_bookings.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in pending_bookings.paginator.page_range %}
+                    {% if pending_bookings.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > pending_bookings.number|add:'-3' and num < pending_bookings.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pending_bookings.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ pending_bookings.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+    {% else %}
+        <div class="no-bookings">
+            <i class="fas fa-calendar-check fa-4x text-muted mb-3"></i>
+            <h3>No Pending Bookings</h3>
+            {% if search_query %}
+                <p>No bookings found matching "{{ search_query }}"</p>
+                <a href="{% url 'services:admin_pending_bookings' %}" class="btn btn-primary">
+                    <i class="fas fa-list me-2"></i>View All Pending Bookings
+                </a>
+            {% else %}
+                <p>All bookings have been processed. Great job!</p>
+                <a href="{% url 'services:admin_dashboard' %}" class="btn btn-primary">
+                    <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Approval Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="approvalModalLabel">
+                    <i class="fas fa-check me-2"></i>Approve Booking
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-success">
+                    <i class="fas fa-info-circle me-2"></i>
+                    You are about to approve this booking. The customer will be notified.
+                </div>
+                <form id="approvalForm">
+                    <div class="mb-3">
+                        <label for="approvalNotes" class="form-label">Admin Notes (Optional)</label>
+                        <textarea class="form-control" id="approvalNotes" rows="3"
+                                  placeholder="Add any notes for the customer or provider..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="approveBooking()">
+                    <i class="fas fa-check me-1"></i>Approve Booking
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rejection Modal -->
+<div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="rejectionModalLabel">
+                    <i class="fas fa-times me-2"></i>Reject Booking
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    You are about to reject this booking. Please provide a reason.
+                </div>
+                <form id="rejectionForm">
+                    <div class="mb-3">
+                        <label for="rejectionReason" class="form-label">Reason for Rejection *</label>
+                        <select class="form-select" id="rejectionReason" required>
+                            <option value="">Select a reason...</option>
+                            <option value="provider_unavailable">Provider Unavailable</option>
+                            <option value="service_area_not_covered">Service Area Not Covered</option>
+                            <option value="insufficient_information">Insufficient Information</option>
+                            <option value="duplicate_booking">Duplicate Booking</option>
+                            <option value="technical_issues">Technical Issues</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="otherReasonDiv" style="display: none;">
+                        <label for="otherRejectionReason" class="form-label">Please specify</label>
+                        <textarea class="form-control" id="otherRejectionReason" rows="2"
+                                  placeholder="Please provide details..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rejectionNotes" class="form-label">Admin Notes (Optional)</label>
+                        <textarea class="form-control" id="rejectionNotes" rows="3"
+                                  placeholder="Additional notes for internal use..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="rejectBooking()">
+                    <i class="fas fa-times me-1"></i>Reject Booking
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Details Modal -->
+<div class="modal fade" id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookingDetailsModalLabel">
+                    <i class="far fa-eye me-2"></i>Booking Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="bookingDetailsContent">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Global variables
+    let currentBookingIndex = -1;
+    let pendingBookings = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Collect booking data from the page
+        pendingBookings = [
+            {% for booking in pending_bookings %}
+            {
+                customer_name: '{{ booking.customer.get_full_name }}',
+                customer_email: '{{ booking.customer.email }}',
+                provider_name: '{{ booking.provider.get_full_name|default:booking.provider.email }}',
+                provider_email: '{{ booking.provider.email }}',
+                booking_date: '{{ booking.booking_date|date:"M d, Y H:i" }}',
+                created_at: '{{ booking.created_at|date:"M d, Y H:i" }}',
+                address: '{{ booking.address }}',
+                phone_number: '{{ booking.phone_number }}',
+                total_amount: '{{ booking.total_amount }}',
+                special_instructions: '{{ booking.special_instructions|default:"" }}',
+                status: '{{ booking.status }}'
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        // Handle rejection reason dropdown
+        document.getElementById('rejectionReason').addEventListener('change', function() {
+            const otherReasonDiv = document.getElementById('otherReasonDiv');
+            if (this.value === 'other') {
+                otherReasonDiv.style.display = 'block';
+            } else {
+                otherReasonDiv.style.display = 'none';
+            }
+        });
+    });
+
+    // Show approval modal
+    function showApprovalModal(bookingIndex) {
+        currentBookingIndex = bookingIndex;
+        new bootstrap.Modal(document.getElementById('approvalModal')).show();
+    }
+
+    // Show rejection modal
+    function showRejectionModal(bookingIndex) {
+        currentBookingIndex = bookingIndex;
+        new bootstrap.Modal(document.getElementById('rejectionModal')).show();
+    }
+
+    // Show booking details modal
+    function showBookingDetails(bookingIndex) {
+        if (bookingIndex >= 0 && bookingIndex < pendingBookings.length) {
+            const booking = pendingBookings[bookingIndex];
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user me-2"></i>Customer Information</h6>
+                        <p><strong>Name:</strong> ${booking.customer_name}</p>
+                        <p><strong>Email:</strong> ${booking.customer_email}</p>
+                        <p><strong>Phone:</strong> ${booking.phone_number}</p>
+                        <p><strong>Booking Date:</strong> ${booking.booking_date}</p>
+                        <p><strong>Amount:</strong> <span class="text-success fw-bold">₹${booking.total_amount}</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user-tie me-2"></i>Provider Information</h6>
+                        <p><strong>Name:</strong> ${booking.provider_name}</p>
+                        <p><strong>Email:</strong> ${booking.provider_email}</p>
+                        <p><strong>Status:</strong> <span class="badge bg-warning">${booking.status}</span></p>
+                        <p><strong>Created:</strong> ${booking.created_at}</p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6><i class="fas fa-map-marker-alt me-2"></i>Service Address</h6>
+                        <p>${booking.address}</p>
+                        ${booking.special_instructions ? `
+                        <h6><i class="fas fa-sticky-note me-2"></i>Special Instructions</h6>
+                        <p class="text-muted">${booking.special_instructions}</p>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            document.getElementById('bookingDetailsContent').innerHTML = content;
+            new bootstrap.Modal(document.getElementById('bookingDetailsModal')).show();
+        }
+    }
+
+    // Approve booking function
+    function approveBooking() {
+        const adminNotes = document.getElementById('approvalNotes').value;
+
+        // Show loading state
+        const approveBtn = document.querySelector('#approvalModal .btn-success');
+        const originalText = approveBtn.innerHTML;
+        approveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Approving...';
+        approveBtn.disabled = true;
+
+        // Send AJAX request
+        fetch('/services/api/admin/booking/approve/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                booking_index: currentBookingIndex,
+                admin_notes: adminNotes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ ' + data.message);
+                bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+
+                // Update dashboard statistics if available
+                if (data.updated_stats) {
+                    // Try to update dashboard if it's open in another tab/window
+                    if (window.opener && window.opener.refreshDashboardStats) {
+                        window.opener.refreshDashboardStats(data.updated_stats);
+                    }
+
+                    // Send message to all windows (for dashboard updates)
+                    if (window.postMessage) {
+                        window.postMessage({
+                            type: 'booking_status_changed',
+                            action: 'approved',
+                            updated_stats: data.updated_stats
+                        }, '*');
+                    }
+
+                    console.log('Booking approved - Updated stats:', data.updated_stats);
+                }
+
+                location.reload(); // Refresh page to show updated data
+            } else {
+                alert('❌ ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error approving booking. Please try again.');
+        })
+        .finally(() => {
+            // Restore button state
+            approveBtn.innerHTML = originalText;
+            approveBtn.disabled = false;
+        });
+    }
+
+    // Reject booking function
+    function rejectBooking() {
+        const rejectionReason = document.getElementById('rejectionReason').value;
+        const otherReason = document.getElementById('otherRejectionReason').value;
+        const adminNotes = document.getElementById('rejectionNotes').value;
+
+        if (!rejectionReason) {
+            alert('Please select a reason for rejection.');
+            return;
+        }
+
+        const finalReason = rejectionReason === 'other' ? otherReason : rejectionReason;
+
+        // Show loading state
+        const rejectBtn = document.querySelector('#rejectionModal .btn-danger');
+        const originalText = rejectBtn.innerHTML;
+        rejectBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Rejecting...';
+        rejectBtn.disabled = true;
+
+        // Send AJAX request
+        fetch('/services/api/admin/booking/reject/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                booking_index: currentBookingIndex,
+                rejection_reason: finalReason,
+                admin_notes: adminNotes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ ' + data.message);
+                bootstrap.Modal.getInstance(document.getElementById('rejectionModal')).hide();
+
+                // Update dashboard statistics if available
+                if (data.updated_stats) {
+                    // Try to update dashboard if it's open in another tab/window
+                    if (window.opener && window.opener.refreshDashboardStats) {
+                        window.opener.refreshDashboardStats(data.updated_stats);
+                    }
+
+                    // Send message to all windows (for dashboard updates)
+                    if (window.postMessage) {
+                        window.postMessage({
+                            type: 'booking_status_changed',
+                            action: 'rejected',
+                            updated_stats: data.updated_stats
+                        }, '*');
+                    }
+
+                    console.log('Booking rejected - Updated stats:', data.updated_stats);
+                }
+
+                location.reload(); // Refresh page to show updated data
+            } else {
+                alert('❌ ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error rejecting booking. Please try again.');
+        })
+        .finally(() => {
+            // Restore button state
+            rejectBtn.innerHTML = originalText;
+            rejectBtn.disabled = false;
+        });
+    }
+</script>
+{% endblock %}

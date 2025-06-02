@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if title %}{{ title }} | {% endif %}Services - HomeService{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    {% block service_content %}
+    {% endblock %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}

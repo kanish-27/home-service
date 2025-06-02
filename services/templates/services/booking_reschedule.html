@@ -1,0 +1,168 @@
+{% extends 'services/base.html' %}
+
+{% block title %}Reschedule Booking{% endblock %}
+
+{% block service_content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'services:booking_list' %}">My Bookings</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'services:booking_detail' booking.id %}">Booking #{{ booking.id }}</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Reschedule</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Reschedule Form -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        Reschedule Booking
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Current Booking Date:</strong>
+                            {% if booking.booking_date %}
+                                {{ booking.booking_date|date:"F d, Y \a\t g:i A" }}
+                            {% else %}
+                                Not specified
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="id_booking_date" class="form-label">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                {{ form.booking_date.label }}
+                            </label>
+                            {{ form.booking_date }}
+                            {% if form.booking_date.help_text %}
+                                <div class="form-text">{{ form.booking_date.help_text }}</div>
+                            {% endif %}
+                            {% if form.booking_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.booking_date.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-calendar-check me-2"></i> Update Booking Date
+                            </button>
+                            <a href="{% url 'services:booking_detail' booking.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Back to Booking
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Booking Summary -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Booking Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Booking ID:</strong><br>
+                        <span class="text-muted">#{{ booking.id }}</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Service:</strong><br>
+                        <span class="text-muted">
+                            {% if booking.notes and 'Booking for' in booking.notes %}
+                                {{ booking.notes|slice:"12:40" }}
+                            {% else %}
+                                Service details
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Status:</strong><br>
+                        <span class="badge bg-success">{{ booking.status|title }}</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Total Amount:</strong><br>
+                        <span class="text-success fw-bold">₹{{ booking.total_amount|default:"0" }}</span>
+                    </div>
+
+                    {% if booking.address %}
+                    <div class="mb-3">
+                        <strong>Address:</strong><br>
+                        <span class="text-muted">{{ booking.address }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Important Notes -->
+            <div class="card mt-3">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Important Notes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            You can reschedule your booking up to 24 hours before the scheduled time.
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            The service provider will be notified of the new date and time.
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Your invoice will be updated with the new booking details.
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success me-2"></i>
+                            No additional charges apply for rescheduling.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add validation for datetime-local input
+const bookingDate = document.getElementById('id_booking_date');
+if (bookingDate) {
+    bookingDate.addEventListener('change', function() {
+        const now = new Date();
+        const selectedDate = new Date(this.value);
+        if (selectedDate < now) {
+            this.setCustomValidity('Please select a date and time in the future.');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+}
+</script>
+{% endblock %}

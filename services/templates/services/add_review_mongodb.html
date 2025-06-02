@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Write a Review - {{ booking.service.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-star text-warning me-2"></i>
+                            Write a Review
+                        </h4>
+                        <a href="{% url 'services:booking_list' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Bookings
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Service Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            {% if booking.service.image %}
+                                <img src="{{ booking.service.image.url }}" class="img-fluid rounded" alt="{{ booking.service.name }}">
+                            {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 150px;">
+                                    <i class="fas fa-tools fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <h5 class="mb-2">{{ booking.service.name }}</h5>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-calendar me-1"></i>
+                                Booking Date: {{ booking.booking_date|date:"F j, Y" }}
+                            </p>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-rupee-sign me-1"></i>
+                                Amount: ₹{{ booking.total_amount }}
+                            </p>
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>
+                                Completed
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Review Form -->
+                    <form method="post" id="review-form">
+                        {% csrf_token %}
+                        
+                        <!-- Rating Section -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-star text-warning me-1"></i>
+                                Rate this service *
+                            </label>
+                            <div class="rating-input">
+                                <div class="star-rating d-flex align-items-center">
+                                    <input type="radio" id="star5" name="rating" value="5" required>
+                                    <label for="star5" title="5 stars - Excellent">
+                                        <i class="fas fa-star"></i>
+                                    </label>
+                                    <input type="radio" id="star4" name="rating" value="4" required>
+                                    <label for="star4" title="4 stars - Very Good">
+                                        <i class="fas fa-star"></i>
+                                    </label>
+                                    <input type="radio" id="star3" name="rating" value="3" required>
+                                    <label for="star3" title="3 stars - Good">
+                                        <i class="fas fa-star"></i>
+                                    </label>
+                                    <input type="radio" id="star2" name="rating" value="2" required>
+                                    <label for="star2" title="2 stars - Fair">
+                                        <i class="fas fa-star"></i>
+                                    </label>
+                                    <input type="radio" id="star1" name="rating" value="1" required>
+                                    <label for="star1" title="1 star - Poor">
+                                        <i class="fas fa-star"></i>
+                                    </label>
+                                </div>
+                                <span class="rating-text ms-3 text-muted">Click to rate</span>
+                            </div>
+                            <div id="ratingError" class="text-danger small mt-1 d-none">
+                                Please select a rating before submitting your review.
+                            </div>
+                        </div>
+
+                        <!-- Comment Section -->
+                        <div class="mb-4">
+                            <label for="comment" class="form-label fw-bold">
+                                <i class="fas fa-comment me-1"></i>
+                                Your Review
+                            </label>
+                            <textarea 
+                                class="form-control" 
+                                id="comment" 
+                                name="comment" 
+                                rows="4" 
+                                placeholder="Share your experience with this service. What did you like? How was the quality? Would you recommend it to others?"
+                                maxlength="1000"
+                            ></textarea>
+                            <div class="form-text">
+                                <span id="charCount">0</span>/1000 characters
+                            </div>
+                        </div>
+                        
+                        <!-- Review Guidelines -->
+                        <div class="alert alert-info">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    <i class="fas fa-info-circle fa-lg mt-1"></i>
+                                </div>
+                                <div>
+                                    <h6>Review Guidelines</h6>
+                                    <ul class="small mb-0">
+                                        <li>Be honest and objective in your review</li>
+                                        <li>Focus on your experience with the service</li>
+                                        <li>Avoid personal information or offensive language</li>
+                                        <li>Your review will help other customers make informed decisions</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'services:booking_list' %}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i>
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-star me-1"></i>
+                                Submit Review
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Star Rating Styles */
+    .star-rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+    }
+
+    .star-rating input {
+        display: none;
+    }
+
+    .star-rating label {
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        display: block;
+        color: #ddd;
+        font-size: 24px;
+        transition: color 0.2s;
+        text-align: center;
+        line-height: 30px;
+    }
+
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input:checked ~ label {
+        color: #ffc107;
+    }
+
+    .star-rating input:checked ~ label {
+        color: #ffc107;
+    }
+
+    /* Card hover effect */
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+
+    /* Button animations */
+    .btn {
+        transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+
+    /* Form styling */
+    .form-control:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('review-form');
+    const ratingInputs = document.querySelectorAll('input[name="rating"]');
+    const ratingError = document.getElementById('ratingError');
+    const ratingText = document.querySelector('.rating-text');
+    const commentField = document.getElementById('comment');
+    const charCount = document.getElementById('charCount');
+    
+    // Rating text updates
+    const ratingTexts = {
+        '5': 'Excellent!',
+        '4': 'Very Good',
+        '3': 'Good',
+        '2': 'Fair',
+        '1': 'Poor'
+    };
+    
+    // Form validation
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let ratingSelected = false;
+            
+            // Check if a rating is selected
+            ratingInputs.forEach(input => {
+                if (input.checked) {
+                    ratingSelected = true;
+                }
+            });
+            
+            if (!ratingSelected) {
+                e.preventDefault();
+                ratingError.classList.remove('d-none');
+                
+                // Scroll to the error message
+                ratingError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    }
+    
+    // Clear error and update text when a rating is selected
+    ratingInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.checked) {
+                ratingError.classList.add('d-none');
+                ratingText.textContent = ratingTexts[this.value];
+                ratingText.classList.remove('text-muted');
+                ratingText.classList.add('text-warning', 'fw-bold');
+            }
+        });
+    });
+    
+    // Character counter for comment
+    if (commentField && charCount) {
+        commentField.addEventListener('input', function() {
+            const length = this.value.length;
+            charCount.textContent = length;
+            
+            // Change color based on character count
+            if (length > 900) {
+                charCount.classList.add('text-danger');
+                charCount.classList.remove('text-warning', 'text-muted');
+            } else if (length > 800) {
+                charCount.classList.add('text-warning');
+                charCount.classList.remove('text-danger', 'text-muted');
+            } else {
+                charCount.classList.add('text-muted');
+                charCount.classList.remove('text-danger', 'text-warning');
+            }
+            
+            // Auto-resize textarea
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        
+        // Trigger resize on page load if there's content
+        if (commentField.value) {
+            commentField.dispatchEvent(new Event('input'));
+        }
+    }
+});
+</script>
+{% endblock %}

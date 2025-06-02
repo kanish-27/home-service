@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Book Service - {{ service.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h3 class="mb-0">Book Service: {{ service.name }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Service Provider</label>
+                                <div class="form-control-plaintext">
+                                    {{ service.provider.user.get_full_name }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Price</label>
+                                <div class="form-control-plaintext">
+                                    ₹{{ service.price }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Booking Date</label>
+                                <input type="date" name="booking_date" class="form-control"
+                                       min="{{ min_booking_date }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Booking Time</label>
+                                <input type="time" name="booking_time" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Address</label>
+                                <textarea name="address" class="form-control" rows="4" required
+                                          placeholder="Enter your complete address including street, city, state, and zip code..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Phone Number</label>
+                                <input type="tel" name="phone_number" class="form-control" required
+                                      placeholder="Enter your phone number for service communication...">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Additional Notes</label>
+                                <textarea name="notes" class="form-control" rows="3"
+                                          placeholder="Any special instructions or requirements..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check me-2"></i>Confirm Booking
+                            </button>
+                            <a href="{% url 'services:service_detail' service.id %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Service
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

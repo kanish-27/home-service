@@ -1,0 +1,1505 @@
+{% extends 'services/base.html' %}
+
+{% block title %}My Bookings{% endblock %}
+
+{% block extra_css %}
+<style>
+    .booking-row:hover {
+        background-color: #f8f9fa;
+    }
+
+    .workflow-pulse {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+        }
+    }
+
+    .workflow-step {
+        transition: all 0.3s ease;
+    }
+
+    .workflow-step:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Service Delivery Status Colors */
+    .workflow-step.bg-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+
+    .workflow-step.bg-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+
+    .workflow-step.bg-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+    }
+</style>
+{% endblock %}
+
+{% block service_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">My Bookings</h1>
+    <div class="btn-group" role="group">
+        <a href="{% url 'services:service_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-search me-1"></i> Find Services
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white">
+        <ul class="nav nav-tabs card-header-tabs" id="bookingTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab"
+                        data-bs-target="#upcoming" type="button" role="tab" aria-controls="upcoming"
+                        aria-selected="true">
+                    Upcoming
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pending-tab" data-bs-toggle="tab"
+                        data-bs-target="#pending" type="button" role="tab" aria-controls="pending"
+                        aria-selected="false">
+                    Pending
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="completed-tab" data-bs-toggle="tab"
+                        data-bs-target="#completed" type="button" role="tab" aria-controls="completed"
+                        aria-selected="false">
+                    Completed
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="rejected-tab" data-bs-toggle="tab"
+                        data-bs-target="#rejected" type="button" role="tab" aria-controls="rejected"
+                        aria-selected="false">
+                    Rejected
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab"
+                        data-bs-target="#cancelled" type="button" role="tab" aria-controls="cancelled"
+                        aria-selected="false">
+                    Cancelled
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <div class="card-body">
+        <div class="tab-content" id="bookingTabsContent">
+            <!-- Upcoming Bookings -->
+            <div class="tab-pane fade show active" id="upcoming" role="tabpanel" aria-labelledby="upcoming-tab">
+                {% with bookings=upcoming_bookings %}
+                    {% if bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Provider</th>
+                                        <th>Date & Time</th>
+                                        <th>Status</th>
+                                        <th>Amount</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in bookings %}
+                                        <tr class="booking-row" data-bs-toggle="collapse" data-bs-target="#workflow-{{ booking.id }}" aria-expanded="false" style="cursor: pointer;">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if booking.service.image %}
+                                                        <img src="{{ booking.service.image.url }}"
+                                                             class="rounded me-3" alt="{{ booking.service.name }}"
+                                                             width="60" height="60" style="object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-light rounded d-flex align-items-center justify-content-center me-3"
+                                                             style="width: 60px; height: 60px;">
+                                                            <i class="fas fa-tools text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div>
+                                                        <h6 class="mb-0">{{ booking.service.name|default:"Service Booking" }}</h6>
+                                                        <small class="text-muted">{{ booking.service.category.name|default:"Service" }}</small>
+                                                        <br><small class="text-primary"><i class="fas fa-info-circle me-1"></i>Click to see "What Happens Next?"</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if booking.provider.profile_picture %}
+                                                        <img src="{{ booking.provider.profile_picture.url }}"
+                                                             class="rounded-circle me-2"
+                                                             alt="{{ booking.provider.get_full_name }}"
+                                                             width="32" height="32" style="object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                             style="width: 32px; height: 32px;">
+                                                            <i class="fas fa-user text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <span>{{ booking.provider.get_full_name|default:booking.provider.email|default:"Provider" }}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div>{{ booking.booking_date|date:"M d, Y"|default:"Date pending" }}</div>
+                                                <small class="text-muted">{{ booking.booking_date|time:"h:i A"|default:"Time pending" }}</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{% if booking.status == 'completed' %}success{% elif booking.status == 'confirmed' %}primary{% elif booking.status == 'pending' %}warning{% elif booking.status == 'rejected' %}danger{% else %}secondary{% endif %}">
+                                                    {{ booking.get_status_display|default:booking.status|title|default:"Pending" }}
+                                                </span>
+                                                {% if booking.status == 'rejected' and booking.rejection_reason %}
+                                                    <br><small class="text-muted">{{ booking.rejection_reason }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>₹{{ booking.total_amount|default:"0" }}</td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                            type="button"
+                                                            id="bookingActions{{ booking.id|default:'temp' }}"
+                                                            data-bs-toggle="dropdown"
+                                                            data-bs-auto-close="true"
+                                                            aria-expanded="false"
+                                                            aria-haspopup="true">
+                                                        Actions
+                                                    </button>
+                                                    <ul class="dropdown-menu" aria-labelledby="bookingActions{{ booking.id|default:'temp' }}">
+                                                        {% if booking %}
+                                                            <li>
+                                                                <a class="dropdown-item" href="{% url 'services:booking_detail' booking.id %}">
+                                                                    <i class="far fa-eye me-1"></i> View Details
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a class="dropdown-item" href="#" onclick="showUpdateModal({{ forloop.counter0 }})">
+                                                                    <i class="far fa-calendar-alt me-1"></i> Update Booking
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a class="dropdown-item" href="tel:{{ booking.provider.phone_number|default:'+91-9876543210' }}">
+                                                                    <i class="fas fa-phone me-1"></i> Contact Provider
+                                                                </a>
+                                                            </li>
+                                                            <li><hr class="dropdown-divider"></li>
+                                                        {% else %}
+                                                            <li>
+                                                                <span class="dropdown-item text-muted">
+                                                                    <i class="far fa-eye me-1"></i> Processing...
+                                                                </span>
+                                                            </li>
+                                                        {% endif %}
+                                                        {% if booking %}
+                                                            <li>
+                                                                <a class="dropdown-item text-danger" href="#" onclick="showCancelModal({{ forloop.counter0 }})">
+                                                                    <i class="far fa-times-circle me-1"></i> Cancel Booking
+                                                                </a>
+                                                            </li>
+                                                        {% else %}
+                                                            <li>
+                                                                <span class="dropdown-item text-muted">
+                                                                    <i class="far fa-times-circle me-1"></i> Processing...
+                                                                </span>
+                                                            </li>
+                                                        {% endif %}
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        <!-- What Happens Next? Workflow Section -->
+                                        {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+                                        <tr>
+                                            <td colspan="6" class="p-0">
+                                                <div class="collapse" id="workflow-{{ booking.id }}">
+                                                    <div class="card border-0 bg-light">
+                                                        <div class="card-body">
+                                                            <!-- What Happens Next Header -->
+                                                            <div class="workflow-header text-center mb-4">
+                                                                <h5 class="mb-0 text-white p-3 rounded" style="background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);">
+                                                                    <i class="fas fa-route me-2"></i>What Happens Next?
+                                                                </h5>
+                                                            </div>
+
+                                                            <!-- Workflow Steps -->
+                                                            <div class="row g-3">
+                                                                <!-- Step 1: Payment -->
+                                                                <div class="col-md-3">
+                                                                    <div class="workflow-step h-100 p-3 rounded border {% if booking.payment_status == 'paid' %}bg-success text-white{% elif booking.payment_status == 'pending' %}bg-warning text-dark{% else %}bg-light{% endif %}">
+                                                                        <div class="text-center mb-2">
+                                                                            {% if booking.payment_status == 'paid' %}
+                                                                                <i class="fas fa-check-circle fa-2x"></i>
+                                                                            {% else %}
+                                                                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                        <h6 class="fw-bold mb-2">Payment Completed</h6>
+                                                                        <p class="small mb-0">
+                                                                            {% if booking.payment_status == 'paid' %}
+                                                                                Your payment has been successfully processed.
+                                                                            {% else %}
+                                                                                Please complete your payment to proceed.
+                                                                            {% endif %}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Step 2: Admin Review -->
+                                                                <div class="col-md-3">
+                                                                    <div class="workflow-step h-100 p-3 rounded border {% if booking.status == 'confirmed' %}bg-success text-white{% elif booking.payment_status == 'paid' and booking.status != 'confirmed' %}bg-warning text-dark workflow-pulse{% else %}bg-light text-muted{% endif %}">
+                                                                        <div class="text-center mb-2">
+                                                                            {% if booking.status == 'confirmed' %}
+                                                                                <i class="fas fa-check-circle fa-2x"></i>
+                                                                            {% elif booking.payment_status == 'paid' %}
+                                                                                <i class="fas fa-clock fa-2x"></i>
+                                                                            {% else %}
+                                                                                <i class="fas fa-user-shield fa-2x"></i>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                        <h6 class="fw-bold mb-2">Admin Review</h6>
+                                                                        <p class="small mb-0">
+                                                                            {% if booking.status == 'confirmed' %}
+                                                                                Your booking has been approved by our admin team.
+                                                                            {% elif booking.payment_status == 'paid' %}
+                                                                                Our admin team is reviewing your booking.
+                                                                            {% else %}
+                                                                                Awaiting payment completion.
+                                                                            {% endif %}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Step 3: Invoice -->
+                                                                <div class="col-md-3">
+                                                                    <div class="workflow-step h-100 p-3 rounded border {% if booking.status == 'confirmed' and booking.payment_status == 'paid' %}bg-success text-white{% elif booking.status == 'confirmed' %}bg-warning text-dark workflow-pulse{% else %}bg-light text-muted{% endif %}">
+                                                                        <div class="text-center mb-2">
+                                                                            {% if booking.status == 'confirmed' and booking.payment_status == 'paid' %}
+                                                                                <i class="fas fa-check-circle fa-2x"></i>
+                                                                            {% elif booking.status == 'confirmed' %}
+                                                                                <i class="fas fa-file-invoice fa-2x"></i>
+                                                                            {% else %}
+                                                                                <i class="fas fa-file-invoice fa-2x"></i>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                        <h6 class="fw-bold mb-2">Confirmation & Invoice</h6>
+                                                                        <p class="small mb-0">
+                                                                            {% if booking.status == 'confirmed' and booking.payment_status == 'paid' %}
+                                                                                Invoice ready! Download your invoice with QR code.
+                                                                            {% elif booking.status == 'confirmed' %}
+                                                                                Invoice will be generated after payment completion.
+                                                                            {% else %}
+                                                                                Invoice will be generated after admin approval.
+                                                                            {% endif %}
+                                                                        </p>
+
+                                                                        {% if booking.status == 'confirmed' and booking.payment_status == 'paid' %}
+                                                                            <div class="mt-2">
+                                                                                <a href="{% url 'services:invoice_download' booking.id %}" class="btn btn-sm btn-light">
+                                                                                    <i class="fas fa-download me-1"></i> Download
+                                                                                </a>
+                                                                            </div>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Step 4: Service Delivery -->
+                                                                <div class="col-md-3">
+                                                                    <div class="workflow-step h-100 p-3 rounded border {% if booking.status == 'completed' %}bg-success text-white{% elif booking.status == 'rejected' %}bg-danger text-white{% elif booking.status == 'confirmed' and booking.payment_status == 'paid' %}bg-warning text-dark workflow-pulse{% else %}bg-light text-muted{% endif %}">
+                                                                        <div class="text-center mb-2">
+                                                                            {% if booking.status == 'completed' %}
+                                                                                <i class="fas fa-check-circle fa-2x"></i>
+                                                                            {% elif booking.status == 'rejected' %}
+                                                                                <i class="fas fa-times-circle fa-2x"></i>
+                                                                            {% elif booking.status == 'confirmed' and booking.payment_status == 'paid' %}
+                                                                                <i class="fas fa-clock fa-2x"></i>
+                                                                            {% else %}
+                                                                                <i class="fas fa-tools fa-2x"></i>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                        <h6 class="fw-bold mb-2">Service Delivery</h6>
+                                                                        <p class="small mb-0">
+                                                                            {% if booking.status == 'completed' %}
+                                                                                ✅ Service completed successfully by the provider!
+                                                                            {% elif booking.status == 'rejected' %}
+                                                                                ❌ Service was rejected by the provider.
+                                                                            {% elif booking.status == 'confirmed' and booking.payment_status == 'paid' %}
+                                                                                🔄 Service provider will contact you soon to deliver the service.
+                                                                            {% else %}
+                                                                                The service provider will contact you and deliver the service as scheduled.
+                                                                            {% endif %}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Quick Actions -->
+                                                            <div class="text-center mt-4">
+                                                                {% if booking.payment_status != 'paid' %}
+                                                                    <a href="{% url 'services:payment' booking.id %}" class="btn btn-primary me-2">
+                                                                        <i class="fas fa-credit-card me-1"></i> Complete Payment
+                                                                    </a>
+                                                                {% endif %}
+
+                                                                {% if booking.status == 'confirmed' and booking.payment_status == 'paid' %}
+                                                                    <a href="{% url 'services:invoice' booking.id %}" class="btn btn-success me-2">
+                                                                        <i class="fas fa-file-invoice me-1"></i> View Invoice
+                                                                    </a>
+                                                                    <a href="{% url 'services:invoice_download' booking.id %}" class="btn btn-outline-success me-2">
+                                                                        <i class="fas fa-download me-1"></i> Download PDF
+                                                                    </a>
+                                                                {% endif %}
+
+                                                                <a href="{% url 'services:booking_detail' booking.id %}" class="btn btn-outline-secondary">
+                                                                    <i class="fas fa-eye me-1"></i> View Full Details
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+
+                                        <!-- Cancel Booking Modal -->
+                                        {% if booking.id %}
+                                            <div class="modal fade" id="cancelBookingModal{{ booking.id }}" tabindex="-1"
+                                                 aria-labelledby="cancelBookingModalLabel{{ booking.id }}" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="cancelBookingModalLabel{{ booking.id }}">
+                                                                Cancel Booking
+                                                            </h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p>Are you sure you want to cancel this booking?</p>
+                                                            <p><strong>Service:</strong> {{ booking.service.name|default:"Service" }}</p>
+                                                            <p><strong>Date:</strong> {{ booking.booking_date|date:"F d, Y"|default:"Date pending" }}</p>
+                                                            <p><strong>Time:</strong> {{ booking.booking_date|time:"h:i A"|default:"Time pending" }}</p>
+                                                            {% if booking.cancellation_policy %}
+                                                                <div class="alert alert-warning small">
+                                                                    <h6 class="alert-heading">Cancellation Policy</h6>
+                                                                    {{ booking.cancellation_policy|linebreaksbr }}
+                                                                </div>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                            <form action="{% url 'services:booking_cancel' booking.id %}" method="post" class="d-inline">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="btn btn-danger">
+                                                                    <i class="far fa-times-circle me-1"></i> Confirm Cancellation
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="far fa-calendar-check fa-4x text-muted mb-3"></i>
+                            <h5>No Upcoming Bookings</h5>
+                            <p class="text-muted">You don't have any upcoming bookings at the moment.</p>
+                            <a href="{% url 'services:service_list' %}" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> Find Services
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Pending Bookings -->
+            <div class="tab-pane fade" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+                {% with bookings=pending_bookings %}
+                    {% if bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Provider</th>
+                                        <th>Date & Time</th>
+                                        <th>Status</th>
+                                        <th>Amount</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in bookings %}
+                                        <tr class="booking-row" data-bs-toggle="collapse" data-bs-target="#pending-workflow-{{ booking.id }}" aria-expanded="false" style="cursor: pointer;">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if booking.service.image %}
+                                                        <img src="{{ booking.service.image.url }}"
+                                                             class="rounded me-3" alt="{{ booking.service.name }}"
+                                                             width="60" height="60" style="object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-light rounded d-flex align-items-center justify-content-center me-3"
+                                                             style="width: 60px; height: 60px;">
+                                                            <i class="fas fa-tools text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div>
+                                                        <h6 class="mb-0">{{ booking.service.name|default:"Service Booking" }}</h6>
+                                                        <small class="text-muted">{{ booking.service.category.name|default:"Service" }}</small>
+                                                        <br><small class="text-primary"><i class="fas fa-info-circle me-1"></i>Click to see "What Happens Next?"</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if booking.provider.profile_picture %}
+                                                        <img src="{{ booking.provider.profile_picture.url }}"
+                                                             class="rounded-circle me-2"
+                                                             alt="{{ booking.provider.get_full_name }}"
+                                                             width="32" height="32" style="object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                             style="width: 32px; height: 32px;">
+                                                            <i class="fas fa-user text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <span>{{ booking.provider.get_full_name|default:booking.provider.email|default:"Provider" }}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div>{{ booking.booking_date|date:"M d, Y"|default:"Date pending" }}</div>
+                                                <small class="text-muted">{{ booking.booking_date|time:"h:i A"|default:"Time pending" }}</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{% if booking.status == 'completed' %}success{% elif booking.status == 'confirmed' %}primary{% elif booking.status == 'pending' %}warning{% elif booking.status == 'rejected' %}danger{% else %}secondary{% endif %}">
+                                                    {{ booking.get_status_display|default:booking.status|title|default:"Pending" }}
+                                                </span>
+                                                {% if booking.status == 'rejected' and booking.rejection_reason %}
+                                                    <br><small class="text-muted">{{ booking.rejection_reason }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>₹{{ booking.total_amount|default:"0" }}</td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                            type="button"
+                                                            id="pendingBookingActions{{ booking.id|default:'temp' }}"
+                                                            data-bs-toggle="dropdown"
+                                                            data-bs-auto-close="true"
+                                                            aria-expanded="false"
+                                                            aria-haspopup="true">
+                                                        Actions
+                                                    </button>
+                                                    <ul class="dropdown-menu" aria-labelledby="pendingBookingActions{{ booking.id|default:'temp' }}">
+                                                        {% if booking %}
+                                                            <li>
+                                                                <a class="dropdown-item" href="{% url 'services:booking_detail' booking.id %}">
+                                                                    <i class="far fa-eye me-1"></i> View Details
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a class="dropdown-item" href="#" onclick="showUpdateModal({{ forloop.counter0 }})">
+                                                                    <i class="far fa-calendar-alt me-1"></i> Update Booking
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a class="dropdown-item" href="tel:{{ booking.provider.phone_number|default:'+91-9876543210' }}">
+                                                                    <i class="fas fa-phone me-1"></i> Contact Provider
+                                                                </a>
+                                                            </li>
+                                                            <li><hr class="dropdown-divider"></li>
+                                                            <li>
+                                                                <a class="dropdown-item text-danger" href="#" onclick="showCancelModal({{ forloop.counter0 }})">
+                                                                    <i class="far fa-times-circle me-1"></i> Cancel Request
+                                                                </a>
+                                                            </li>
+                                                        {% else %}
+                                                            <li>
+                                                                <span class="dropdown-item text-muted">
+                                                                    <i class="far fa-eye me-1"></i> Processing...
+                                                                </span>
+                                                            </li>
+                                                        {% endif %}
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        <!-- What Happens Next? Workflow Section for Pending -->
+                                        <tr>
+                                            <td colspan="6" class="p-0">
+                                                <div class="collapse" id="pending-workflow-{{ booking.id }}">
+                                                    <div class="card border-0 bg-light">
+                                                        <div class="card-body">
+                                                            <!-- What Happens Next Header -->
+                                                            <div class="workflow-header text-center mb-4">
+                                                                <h5 class="mb-0 text-white p-3 rounded" style="background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);">
+                                                                    <i class="fas fa-route me-2"></i>What Happens Next?
+                                                                </h5>
+                                                            </div>
+
+                                                            <!-- Workflow Steps -->
+                                                            <div class="row g-3">
+                                                                <!-- Step 1: Payment -->
+                                                                <div class="col-md-3">
+                                                                    <div class="workflow-step h-100 p-3 rounded border {% if booking.payment_status == 'paid' %}bg-success text-white{% elif booking.payment_status == 'pending' %}bg-warning text-dark{% else %}bg-light{% endif %}">
+                                                                        <div class="text-center mb-2">
+                                                                            {% if booking.payment_status == 'paid' %}
+                                                                                <i class="fas fa-check-circle fa-2x"></i>
+                                                                            {% else %}
+                                                                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                        <h6 class="fw-bold mb-2">Payment Completed</h6>
+                                                                        <p class="small mb-0">
+                                                                            {% if booking.payment_status == 'paid' %}
+                                                                                Your payment has been successfully processed.
+                                                                            {% else %}
+                                                                                Please complete your payment to proceed.
+                                                                            {% endif %}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Step 2: Admin Review -->
+                                                                <div class="col-md-3">
+                                                                    <div class="workflow-step h-100 p-3 rounded border {% if booking.status == 'confirmed' %}bg-success text-white{% elif booking.payment_status == 'paid' and booking.status != 'confirmed' %}bg-warning text-dark workflow-pulse{% else %}bg-light text-muted{% endif %}">
+                                                                        <div class="text-center mb-2">
+                                                                            {% if booking.status == 'confirmed' %}
+                                                                                <i class="fas fa-check-circle fa-2x"></i>
+                                                                            {% elif booking.payment_status == 'paid' %}
+                                                                                <i class="fas fa-clock fa-2x"></i>
+                                                                            {% else %}
+                                                                                <i class="fas fa-user-shield fa-2x"></i>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                        <h6 class="fw-bold mb-2">Admin Review</h6>
+                                                                        <p class="small mb-0">
+                                                                            {% if booking.status == 'confirmed' %}
+                                                                                Your booking has been approved by our admin team.
+                                                                            {% elif booking.payment_status == 'paid' %}
+                                                                                Our admin team will review and approve your booking within 24 hours.
+                                                                            {% else %}
+                                                                                Awaiting payment completion.
+                                                                            {% endif %}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Step 3: Invoice -->
+                                                                <div class="col-md-3">
+                                                                    <div class="workflow-step h-100 p-3 rounded border {% if booking.status == 'confirmed' and booking.payment_status == 'paid' %}bg-success text-white{% elif booking.status == 'confirmed' %}bg-warning text-dark workflow-pulse{% else %}bg-light text-muted{% endif %}">
+                                                                        <div class="text-center mb-2">
+                                                                            {% if booking.status == 'confirmed' and booking.payment_status == 'paid' %}
+                                                                                <i class="fas fa-check-circle fa-2x"></i>
+                                                                            {% else %}
+                                                                                <i class="fas fa-file-invoice fa-2x"></i>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                        <h6 class="fw-bold mb-2">Confirmation & Invoice</h6>
+                                                                        <p class="small mb-0">
+                                                                            {% if booking.status == 'confirmed' and booking.payment_status == 'paid' %}
+                                                                                Invoice ready! Download your invoice with QR code.
+                                                                            {% elif booking.status == 'confirmed' %}
+                                                                                Once approved, you'll receive an invoice with a QR code for service access.
+                                                                            {% else %}
+                                                                                Invoice will be generated after admin approval.
+                                                                            {% endif %}
+                                                                        </p>
+
+                                                                        {% if booking.status == 'confirmed' and booking.payment_status == 'paid' %}
+                                                                            <div class="mt-2">
+                                                                                <a href="{% url 'services:invoice_download' booking.id %}" class="btn btn-sm btn-light">
+                                                                                    <i class="fas fa-download me-1"></i> Download
+                                                                                </a>
+                                                                            </div>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Step 4: Service Delivery -->
+                                                                <div class="col-md-3">
+                                                                    <div class="workflow-step h-100 p-3 rounded border {% if booking.status == 'completed' %}bg-success text-white{% elif booking.status == 'rejected' %}bg-danger text-white{% elif booking.status == 'confirmed' and booking.payment_status == 'paid' %}bg-warning text-dark workflow-pulse{% else %}bg-light text-muted{% endif %}">
+                                                                        <div class="text-center mb-2">
+                                                                            {% if booking.status == 'completed' %}
+                                                                                <i class="fas fa-check-circle fa-2x"></i>
+                                                                            {% elif booking.status == 'rejected' %}
+                                                                                <i class="fas fa-times-circle fa-2x"></i>
+                                                                            {% elif booking.status == 'confirmed' and booking.payment_status == 'paid' %}
+                                                                                <i class="fas fa-clock fa-2x"></i>
+                                                                            {% else %}
+                                                                                <i class="fas fa-tools fa-2x"></i>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                        <h6 class="fw-bold mb-2">Service Delivery</h6>
+                                                                        <p class="small mb-0">
+                                                                            {% if booking.status == 'completed' %}
+                                                                                ✅ Service completed successfully by the provider!
+                                                                            {% elif booking.status == 'rejected' %}
+                                                                                ❌ Service was rejected by the provider.
+                                                                            {% elif booking.status == 'confirmed' and booking.payment_status == 'paid' %}
+                                                                                🔄 Service provider will contact you soon to deliver the service.
+                                                                            {% else %}
+                                                                                The service provider will contact you and deliver the service as scheduled.
+                                                                            {% endif %}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Quick Actions -->
+                                                            <div class="text-center mt-4">
+                                                                {% if booking.payment_status != 'paid' %}
+                                                                    <a href="{% url 'services:payment' booking.id %}" class="btn btn-primary me-2">
+                                                                        <i class="fas fa-credit-card me-1"></i> Complete Payment
+                                                                    </a>
+                                                                {% endif %}
+
+                                                                {% if booking.status == 'confirmed' and booking.payment_status == 'paid' %}
+                                                                    <a href="{% url 'services:invoice' booking.id %}" class="btn btn-success me-2">
+                                                                        <i class="fas fa-file-invoice me-1"></i> View Invoice
+                                                                    </a>
+                                                                    <a href="{% url 'services:invoice_download' booking.id %}" class="btn btn-outline-success me-2">
+                                                                        <i class="fas fa-download me-1"></i> Download PDF
+                                                                    </a>
+                                                                {% endif %}
+
+                                                                <a href="{% url 'services:booking_detail' booking.id %}" class="btn btn-outline-secondary">
+                                                                    <i class="fas fa-eye me-1"></i> View Full Details
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Cancel Pending Booking Modal -->
+                                        {% if booking.id %}
+                                            <div class="modal fade" id="cancelPendingBookingModal{{ booking.id }}" tabindex="-1"
+                                                 aria-labelledby="cancelPendingBookingModalLabel{{ booking.id }}" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="cancelPendingBookingModalLabel{{ booking.id }}">
+                                                                Cancel Booking Request
+                                                            </h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p>Are you sure you want to cancel this booking request?</p>
+                                                            <p><strong>Service:</strong> {{ booking.service.name|default:"Service" }}</p>
+                                                            <p><strong>Requested for:</strong> {{ booking.booking_date|date:"F d, Y"|default:"Date pending" }} at {{ booking.booking_date|time:"h:i A"|default:"Time pending" }}</p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                            <form action="{% url 'services:booking_cancel' booking.id %}" method="post" class="d-inline">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="btn btn-danger">
+                                                                    <i class="far fa-times-circle me-1"></i> Cancel Request
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="far fa-clock fa-4x text-muted mb-3"></i>
+                            <h5>No Pending Bookings</h5>
+                            <p class="text-muted">You don't have any pending booking requests.</p>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Completed Bookings -->
+            <div class="tab-pane fade" id="completed" role="tabpanel" aria-labelledby="completed-tab">
+                {% with bookings=completed_bookings %}
+                    {% if bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Provider</th>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Review</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in bookings %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if booking.service.image %}
+                                                        <img src="{{ booking.service.image.url }}"
+                                                             class="rounded me-3" alt="{{ booking.service.name }}"
+                                                             width="60" height="60" style="object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-light rounded d-flex align-items-center justify-content-center me-3"
+                                                             style="width: 60px; height: 60px;">
+                                                            <i class="fas fa-tools text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div>
+                                                        <h6 class="mb-0">{{ booking.service.name|default:"Service Booking" }}</h6>
+                                                        <small class="text-muted">{{ booking.service.category.name|default:"Service" }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if booking.provider.profile_picture %}
+                                                        <img src="{{ booking.provider.profile_picture.url }}"
+                                                             class="rounded-circle me-2"
+                                                             alt="{{ booking.provider.get_full_name }}"
+                                                             width="32" height="32" style="object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                             style="width: 32px; height: 32px;">
+                                                            <i class="fas fa-user text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <span>{{ booking.provider.get_full_name|default:booking.provider.email|default:"Provider" }}</span>
+                                                </div>
+                                            </td>
+                                            <td>{{ booking.booking_date|date:"M d, Y"|default:"Date pending" }}</td>
+                                            <td>₹{{ booking.total_amount|default:"0" }}</td>
+                                            <td>
+                                                {% if booking.review %}
+                                                    <div class="text-warning">
+                                                        {% for i in "12345"|make_list %}
+                                                            {% if forloop.counter <= booking.review.rating %}
+                                                                <i class="fas fa-star"></i>
+                                                            {% else %}
+                                                                <i class="far fa-star"></i>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </div>
+                                                    <small class="text-muted">{{ booking.review.created_at|timesince }} ago</small>
+                                                {% else %}
+                                                    {% if booking.id %}
+                                                        <a href="{% url 'services:add_review' booking.id %}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="far fa-star me-1"></i> Write a Review
+                                                        </a>
+                                                    {% else %}
+                                                        <span class="btn btn-sm btn-outline-secondary disabled">
+                                                            <i class="far fa-star me-1"></i> Processing...
+                                                        </span>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if booking.id %}
+                                                    <a href="{% url 'services:booking_detail' booking.id %}"
+                                                       class="btn btn-sm btn-outline-secondary">
+                                                        <i class="far fa-eye"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <span class="btn btn-sm btn-outline-secondary disabled">
+                                                        <i class="far fa-eye"></i>
+                                                    </span>
+                                                {% endif %}
+                                                {% if booking.service.id %}
+                                                    <a href="{% url 'services:book_service' booking.service.id %}"
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-redo"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <span class="btn btn-sm btn-outline-primary disabled">
+                                                        <i class="fas fa-redo"></i>
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% if is_paginated and completed_bookings.has_other_pages %}
+                            <nav aria-label="Completed bookings pagination" class="mt-4">
+                                <ul class="pagination justify-content-center">
+                                    {% if completed_bookings.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?completed_page={{ completed_bookings.previous_page_number }}#completed" tabindex="-1">
+                                                Previous
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">Previous</span>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for num in completed_bookings.paginator.page_range %}
+                                        {% if completed_bookings.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > completed_bookings.number|add:'-3' and num < completed_bookings.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?completed_page={{ num }}#completed">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if completed_bookings.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?completed_page={{ completed_bookings.next_page_number }}#completed">
+                                                Next
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">Next</span>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="far fa-check-circle fa-4x text-muted mb-3"></i>
+                            <h5>No Completed Bookings</h5>
+                            <p class="text-muted">You haven't completed any bookings yet.</p>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Rejected Bookings -->
+            <div class="tab-pane fade" id="rejected" role="tabpanel" aria-labelledby="rejected-tab">
+                {% with bookings=rejected_bookings %}
+                    {% if bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Provider</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Rejection Reason</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in bookings %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if booking.service.image %}
+                                                        <img src="{{ booking.service.image.url }}"
+                                                             class="rounded me-3" alt="{{ booking.service.name }}"
+                                                             width="60" height="60" style="object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-light rounded d-flex align-items-center justify-content-center me-3"
+                                                             style="width: 60px; height: 60px;">
+                                                            <i class="fas fa-tools text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div>
+                                                        <h6 class="mb-0">{{ booking.service.name|default:"Service Booking" }}</h6>
+                                                        <small class="text-muted">{{ booking.service.category.name|default:"Service" }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if booking.provider.profile_picture %}
+                                                        <img src="{{ booking.provider.profile_picture.url }}"
+                                                             class="rounded-circle me-2"
+                                                             alt="{{ booking.provider.get_full_name }}"
+                                                             width="32" height="32" style="object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                             style="width: 32px; height: 32px;">
+                                                            <i class="fas fa-user text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <span>{{ booking.provider.get_full_name|default:booking.provider.email|default:"Provider" }}</span>
+                                                </div>
+                                            </td>
+                                            <td>{{ booking.booking_date|date:"M d, Y"|default:"Date pending" }}</td>
+                                            <td>
+                                                <span class="badge bg-danger">{{ booking.get_status_display|default:booking.status|title|default:"Rejected" }}</span>
+                                                {% if booking.rejected_at %}
+                                                    <br><small class="text-muted">{{ booking.rejected_at|date:"M d, Y" }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {{ booking.rejection_reason|default:"No reason provided" }}
+                                                </small>
+                                                {% if booking.admin_notes %}
+                                                    <br><small class="text-info">Admin: {{ booking.admin_notes }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if booking.id %}
+                                                    <a href="{% url 'services:booking_detail' booking.id %}"
+                                                       class="btn btn-sm btn-outline-secondary me-1">
+                                                        <i class="far fa-eye"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <span class="btn btn-sm btn-outline-secondary disabled me-1">
+                                                        <i class="far fa-eye"></i>
+                                                    </span>
+                                                {% endif %}
+                                                {% if booking.service.id %}
+                                                    <a href="{% url 'services:book_service' booking.service.id %}"
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-redo"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <span class="btn btn-sm btn-outline-primary disabled">
+                                                        <i class="fas fa-redo"></i>
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-ban fa-4x text-muted mb-3"></i>
+                            <h5>No Rejected Bookings</h5>
+                            <p class="text-muted">You don't have any rejected booking requests.</p>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Cancelled Bookings -->
+            <div class="tab-pane fade" id="cancelled" role="tabpanel" aria-labelledby="cancelled-tab">
+                {% with bookings=cancelled_bookings %}
+                    {% if bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Provider</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Reason</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in bookings %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if booking.service.image %}
+                                                        <img src="{{ booking.service.image.url }}"
+                                                             class="rounded me-3" alt="{{ booking.service.name }}"
+                                                             width="60" height="60" style="object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-light rounded d-flex align-items-center justify-content-center me-3"
+                                                             style="width: 60px; height: 60px;">
+                                                            <i class="fas fa-tools text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div>
+                                                        <h6 class="mb-0">{{ booking.service.name|default:"Service Booking" }}</h6>
+                                                        <small class="text-muted">{{ booking.service.category.name|default:"Service" }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if booking.provider.profile_picture %}
+                                                        <img src="{{ booking.provider.profile_picture.url }}"
+                                                             class="rounded-circle me-2"
+                                                             alt="{{ booking.provider.get_full_name }}"
+                                                             width="32" height="32" style="object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                             style="width: 32px; height: 32px;">
+                                                            <i class="fas fa-user text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <span>{{ booking.provider.get_full_name|default:booking.provider.email|default:"Provider" }}</span>
+                                                </div>
+                                            </td>
+                                            <td>{{ booking.booking_date|date:"M d, Y"|default:"Date pending" }}</td>
+                                            <td>
+                                                <span class="badge bg-danger">{{ booking.get_status_display|default:booking.status|title|default:"Cancelled" }}</span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {{ booking.cancellation_reason|default:"No reason provided" }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                {% if booking.id %}
+                                                    <a href="{% url 'services:booking_detail' booking.id %}"
+                                                       class="btn btn-sm btn-outline-secondary me-1">
+                                                        <i class="far fa-eye"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <span class="btn btn-sm btn-outline-secondary disabled me-1">
+                                                        <i class="far fa-eye"></i>
+                                                    </span>
+                                                {% endif %}
+                                                {% if booking.service.id %}
+                                                    <a href="{% url 'services:book_service' booking.service.id %}"
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-redo"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <span class="btn btn-sm btn-outline-primary disabled">
+                                                        <i class="fas fa-redo"></i>
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% if is_paginated and cancelled_bookings.has_other_pages %}
+                            <nav aria-label="Cancelled bookings pagination" class="mt-4">
+                                <ul class="pagination justify-content-center">
+                                    {% if cancelled_bookings.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?cancelled_page={{ cancelled_bookings.previous_page_number }}#cancelled" tabindex="-1">
+                                                Previous
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">Previous</span>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for num in cancelled_bookings.paginator.page_range %}
+                                        {% if cancelled_bookings.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > cancelled_bookings.number|add:'-3' and num < cancelled_bookings.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?cancelled_page={{ num }}#cancelled">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if cancelled_bookings.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?cancelled_page={{ cancelled_bookings.next_page_number }}#cancelled">
+                                                Next
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">Next</span>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="far fa-times-circle fa-4x text-muted mb-3"></i>
+                            <h5>No Cancelled Bookings</h5>
+                            <p class="text-muted">You haven't cancelled any bookings.</p>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Details Modal -->
+<div class="modal fade" id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookingDetailsModalLabel">
+                    <i class="far fa-eye me-2"></i>Booking Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="bookingDetailsContent">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Booking Modal -->
+<div class="modal fade" id="updateBookingModal" tabindex="-1" aria-labelledby="updateBookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateBookingModalLabel">
+                    <i class="far fa-calendar-alt me-2"></i>Update Booking
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="updateBookingForm">
+                    <div class="mb-3">
+                        <label for="updateBookingDate" class="form-label">New Date</label>
+                        <input type="date" class="form-control" id="updateBookingDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="updateBookingTime" class="form-label">New Time</label>
+                        <input type="time" class="form-control" id="updateBookingTime" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="updateSpecialInstructions" class="form-label">Special Instructions</label>
+                        <textarea class="form-control" id="updateSpecialInstructions" rows="3" placeholder="Any special instructions for the provider..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updateBooking()">
+                    <i class="fas fa-save me-1"></i>Update Booking
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Booking Modal -->
+<div class="modal fade" id="cancelBookingModal" tabindex="-1" aria-labelledby="cancelBookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelBookingModalLabel">
+                    <i class="far fa-times-circle me-2"></i>Cancel Booking
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Are you sure you want to cancel this booking? This action cannot be undone.
+                </div>
+                <form id="cancelBookingForm">
+                    <div class="mb-3">
+                        <label for="cancellationReason" class="form-label">Reason for Cancellation</label>
+                        <select class="form-select" id="cancellationReason" required>
+                            <option value="">Select a reason...</option>
+                            <option value="schedule_conflict">Schedule Conflict</option>
+                            <option value="no_longer_needed">No Longer Needed</option>
+                            <option value="found_alternative">Found Alternative Provider</option>
+                            <option value="emergency">Emergency</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="otherReasonDiv" style="display: none;">
+                        <label for="otherReason" class="form-label">Please specify</label>
+                        <textarea class="form-control" id="otherReason" rows="2" placeholder="Please provide details..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Booking</button>
+                <button type="button" class="btn btn-danger" onclick="cancelBooking()">
+                    <i class="far fa-times-circle me-1"></i>Cancel Booking
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Activate tab based on URL hash
+        const urlHash = window.location.hash;
+        if (urlHash) {
+            const tabTrigger = document.querySelector(`[data-bs-target="${urlHash}"]`);
+            if (tabTrigger) {
+                const tab = new bootstrap.Tab(tabTrigger);
+                tab.show();
+            }
+        }
+
+        // Update URL hash when a tab is shown
+        const tabElms = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabElms.forEach(tabElm => {
+            tabElm.addEventListener('shown.bs.tab', function (event) {
+                const target = event.target.getAttribute('data-bs-target');
+                if (target) {
+                    window.location.hash = target;
+                }
+            });
+        });
+
+        // Initialize all dropdowns manually
+        const dropdownElementList = document.querySelectorAll('.dropdown-toggle');
+        console.log('Found', dropdownElementList.length, 'dropdown buttons');
+
+        // Initialize each dropdown
+        dropdownElementList.forEach(function(dropdownToggle, index) {
+            console.log('Initializing dropdown', index + 1, 'with ID:', dropdownToggle.id);
+
+            try {
+                // Create Bootstrap dropdown instance
+                const dropdown = new bootstrap.Dropdown(dropdownToggle);
+                console.log('✅ Dropdown', index + 1, 'initialized successfully');
+
+                // Add click event for debugging
+                dropdownToggle.addEventListener('click', function(e) {
+                    console.log('🖱️ Dropdown button clicked:', this.id);
+                });
+
+            } catch (error) {
+                console.error('❌ Error initializing dropdown', index + 1, ':', error);
+            }
+        });
+
+        // Add click handlers for dropdown items
+        document.querySelectorAll('.dropdown-item').forEach(function(item, index) {
+            if (!item.classList.contains('text-muted')) {
+                item.addEventListener('click', function(e) {
+                    console.log('🔗 Dropdown item clicked:', this.textContent.trim());
+                    console.log('🔗 Link URL:', this.href);
+                });
+            }
+        });
+
+        // Test Bootstrap availability
+        if (typeof bootstrap !== 'undefined') {
+            console.log('✅ Bootstrap is available');
+        } else {
+            console.error('❌ Bootstrap is not available');
+        }
+
+        // Handle cancellation reason dropdown
+        document.getElementById('cancellationReason').addEventListener('change', function() {
+            const otherReasonDiv = document.getElementById('otherReasonDiv');
+            if (this.value === 'other') {
+                otherReasonDiv.style.display = 'block';
+            } else {
+                otherReasonDiv.style.display = 'none';
+            }
+        });
+    });
+
+    // Global variables to store booking data
+    let currentBookings = [];
+    let currentBookingIndex = -1;
+
+    // Store booking data when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Collect booking data from the page
+        currentBookings = [
+            {% for booking in upcoming_bookings %}
+            {
+                status: '{{ booking.status }}',
+                provider_name: '{{ booking.provider.get_full_name|default:booking.provider.email }}',
+                provider_email: '{{ booking.provider.email }}',
+                booking_date: '{{ booking.booking_date|date:"Y-m-d H:i" }}',
+                address: '{{ booking.address }}',
+                phone_number: '{{ booking.phone_number }}',
+                total_amount: '{{ booking.total_amount }}',
+                special_instructions: '{{ booking.special_instructions|default:"" }}'
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+    });
+
+    // Show booking details modal
+    function showBookingDetails(bookingIndex) {
+        if (bookingIndex >= 0 && bookingIndex < currentBookings.length) {
+            const booking = currentBookings[bookingIndex];
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-info-circle me-2"></i>Booking Information</h6>
+                        <p><strong>Status:</strong> <span class="badge bg-primary">${booking.status}</span></p>
+                        <p><strong>Date & Time:</strong> ${booking.booking_date}</p>
+                        <p><strong>Amount:</strong> ₹${booking.total_amount}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user me-2"></i>Provider Information</h6>
+                        <p><strong>Name:</strong> ${booking.provider_name}</p>
+                        <p><strong>Email:</strong> ${booking.provider_email}</p>
+                        <p><strong>Phone:</strong> <a href="tel:+91-9876543210">+91-9876543210</a></p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6><i class="fas fa-map-marker-alt me-2"></i>Service Address</h6>
+                        <p>${booking.address}</p>
+                        ${booking.special_instructions ? `
+                        <h6><i class="fas fa-sticky-note me-2"></i>Special Instructions</h6>
+                        <p>${booking.special_instructions}</p>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            document.getElementById('bookingDetailsContent').innerHTML = content;
+            new bootstrap.Modal(document.getElementById('bookingDetailsModal')).show();
+        }
+    }
+
+    // Show update booking modal
+    function showUpdateModal(bookingIndex) {
+        currentBookingIndex = bookingIndex;
+        if (bookingIndex >= 0 && bookingIndex < currentBookings.length) {
+            const booking = currentBookings[bookingIndex];
+
+            // Pre-fill form with current booking data
+            const bookingDate = new Date(booking.booking_date);
+            document.getElementById('updateBookingDate').value = bookingDate.toISOString().split('T')[0];
+            document.getElementById('updateBookingTime').value = bookingDate.toTimeString().slice(0, 5);
+            document.getElementById('updateSpecialInstructions').value = booking.special_instructions;
+
+            new bootstrap.Modal(document.getElementById('updateBookingModal')).show();
+        }
+    }
+
+    // Show cancel booking modal
+    function showCancelModal(bookingIndex) {
+        currentBookingIndex = bookingIndex;
+        new bootstrap.Modal(document.getElementById('cancelBookingModal')).show();
+    }
+
+    // Update booking function
+    function updateBooking() {
+        const bookingDate = document.getElementById('updateBookingDate').value;
+        const bookingTime = document.getElementById('updateBookingTime').value;
+        const specialInstructions = document.getElementById('updateSpecialInstructions').value;
+
+        if (!bookingDate || !bookingTime) {
+            alert('Please select both date and time.');
+            return;
+        }
+
+        // Show loading state
+        const updateBtn = document.querySelector('#updateBookingModal .btn-primary');
+        const originalText = updateBtn.innerHTML;
+        updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
+        updateBtn.disabled = true;
+
+        // Send AJAX request
+        fetch('/services/api/booking/update/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                booking_index: currentBookingIndex,
+                booking_date: bookingDate,
+                booking_time: bookingTime,
+                special_instructions: specialInstructions
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ ' + data.message);
+                bootstrap.Modal.getInstance(document.getElementById('updateBookingModal')).hide();
+                location.reload(); // Refresh page to show updated data
+            } else {
+                alert('❌ ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error updating booking. Please try again.');
+        })
+        .finally(() => {
+            // Restore button state
+            updateBtn.innerHTML = originalText;
+            updateBtn.disabled = false;
+        });
+    }
+
+    // Cancel booking function
+    function cancelBooking() {
+        const cancellationReason = document.getElementById('cancellationReason').value;
+        const otherReason = document.getElementById('otherReason').value;
+
+        if (!cancellationReason) {
+            alert('Please select a reason for cancellation.');
+            return;
+        }
+
+        const finalReason = cancellationReason === 'other' ? otherReason : cancellationReason;
+
+        // Show loading state
+        const cancelBtn = document.querySelector('#cancelBookingModal .btn-danger');
+        const originalText = cancelBtn.innerHTML;
+        cancelBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Cancelling...';
+        cancelBtn.disabled = true;
+
+        // Send AJAX request
+        fetch('/services/api/booking/cancel/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                booking_index: currentBookingIndex,
+                cancellation_reason: finalReason
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ ' + data.message);
+                bootstrap.Modal.getInstance(document.getElementById('cancelBookingModal')).hide();
+                location.reload(); // Refresh page to show updated data
+            } else {
+                alert('❌ ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error cancelling booking. Please try again.');
+        })
+        .finally(() => {
+            // Restore button state
+            cancelBtn.innerHTML = originalText;
+            cancelBtn.disabled = false;
+        });
+    }
+</script>
+{% endblock %}

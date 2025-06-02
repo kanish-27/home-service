@@ -1,0 +1,339 @@
+{% extends 'admin/base.html' %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-1">{{ title }}</h2>
+            <p class="text-muted mb-0">
+                {% if service %}
+                    Update service details and pricing
+                {% else %}
+                    Add a new home service with Indian Rupee pricing
+                {% endif %}
+            </p>
+        </div>
+        <a href="{% url 'services:admin_services' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Services
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="admin-card">
+            <div class="card-header bg-transparent border-0 p-4">
+                <h5 class="mb-0">Service Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    Service Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">
+                                    Category <span class="text-danger">*</span>
+                                </label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger small mt-1">{{ form.category.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            Description <span class="text-danger">*</span>
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.price.id_for_label }}" class="form-label">
+                                    Price (₹) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    {{ form.price }}
+                                </div>
+                                {% if form.price.help_text %}
+                                    <div class="form-text">{{ form.price.help_text }}</div>
+                                {% endif %}
+                                {% if form.price.errors %}
+                                    <div class="text-danger small mt-1">{{ form.price.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.duration.id_for_label }}" class="form-label">
+                                    Duration <span class="text-danger">*</span>
+                                </label>
+                                {{ form.duration }}
+                                {% if form.duration.help_text %}
+                                    <div class="form-text">{{ form.duration.help_text }}</div>
+                                {% endif %}
+                                {% if form.duration.errors %}
+                                    <div class="text-danger small mt-1">{{ form.duration.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.provider.id_for_label }}" class="form-label">
+                                    Provider <span class="text-danger">*</span>
+                                </label>
+                                {{ form.provider }}
+                                {% if form.provider.errors %}
+                                    <div class="text-danger small mt-1">{{ form.provider.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.image.id_for_label }}" class="form-label">
+                            Primary Service Image
+                        </label>
+                        {{ form.image }}
+                        {% if service and service.image %}
+                            <div class="mt-2">
+                                <img src="{{ service.image.url }}" alt="Current image"
+                                     class="img-thumbnail" style="max-width: 200px;">
+                            </div>
+                        {% endif %}
+                        {% if form.image.errors %}
+                            <div class="text-danger small mt-1">{{ form.image.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Additional Images Section -->
+                    {% if service %}
+                    <div class="mb-3">
+                        <label class="form-label">Additional Service Images</label>
+
+                        <!-- Current Images -->
+                        {% if service.images.all %}
+                            <div class="row mb-3">
+                                {% for image in service.images.all %}
+                                    <div class="col-md-3 mb-3">
+                                        <div class="card">
+                                            <img src="{{ image.image.url }}" class="card-img-top"
+                                                 style="height: 150px; object-fit: cover;" alt="{{ image.caption }}">
+                                            <div class="card-body p-2">
+                                                <small class="text-muted">{{ image.caption|default:"No caption" }}</small>
+                                                {% if image.is_primary %}
+                                                    <span class="badge bg-primary">Primary</span>
+                                                {% endif %}
+                                                <div class="mt-1">
+                                                    <small class="text-muted">Order: {{ image.order }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Upload Multiple Images -->
+                        <div class="border rounded p-3 bg-light">
+                            <h6>Upload Additional Images</h6>
+                            <form id="imageUploadForm" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <input type="file" class="form-control" id="multipleImages"
+                                           name="images" multiple accept="image/*">
+                                    <div class="form-text">Select multiple images to upload for this service.</div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="uploadImages()">
+                                    <i class="fas fa-upload me-1"></i>Upload Images
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Service is Active
+                                </label>
+                                <div class="form-text">Active services can be booked by customers</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                {{ form.is_available }}
+                                <label class="form-check-label" for="{{ form.is_available.id_for_label }}">
+                                    Currently Available
+                                </label>
+                                <div class="form-text">Available services are shown in listings</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'services:admin_services' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-admin">
+                            <i class="fas fa-save me-2"></i>
+                            {% if service %}Update Service{% else %}Create Service{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="admin-card">
+            <div class="card-header bg-transparent border-0 p-4">
+                <h5 class="mb-0">Service Guidelines</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>Pricing Guidelines</h6>
+                    <ul class="mb-0 small">
+                        <li>Enter prices in Indian Rupees (₹)</li>
+                        <li>Consider market rates for similar services</li>
+                        <li>Include all basic service costs</li>
+                        <li>Additional charges can be added during booking</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-clock me-2"></i>Duration Tips</h6>
+                    <ul class="mb-0 small">
+                        <li>Use HH:MM format (e.g., 02:30 for 2.5 hours)</li>
+                        <li>Include setup and cleanup time</li>
+                        <li>Consider travel time if applicable</li>
+                        <li>Be realistic with time estimates</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-check me-2"></i>Best Practices</h6>
+                    <ul class="mb-0 small">
+                        <li>Write clear, detailed descriptions</li>
+                        <li>Upload high-quality service images</li>
+                        <li>Assign verified providers only</li>
+                        <li>Keep services active and available</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function uploadImages() {
+    const fileInput = document.getElementById('multipleImages');
+    const files = fileInput.files;
+
+    if (files.length === 0) {
+        alert('Please select at least one image to upload.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+    for (let i = 0; i < files.length; i++) {
+        formData.append('images', files[i]);
+    }
+
+    // Show loading state
+    const uploadBtn = event.target;
+    const originalText = uploadBtn.innerHTML;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Uploading...';
+    uploadBtn.disabled = true;
+
+    fetch('{% if service %}{% url "services:upload_service_images" service.id %}{% endif %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Images uploaded successfully!');
+            location.reload(); // Reload to show new images
+        } else {
+            alert('Error uploading images: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error uploading images. Please try again.');
+    })
+    .finally(() => {
+        // Reset button state
+        uploadBtn.innerHTML = originalText;
+        uploadBtn.disabled = false;
+        fileInput.value = ''; // Clear file input
+    });
+}
+
+// Preview selected images before upload
+document.getElementById('multipleImages').addEventListener('change', function(e) {
+    const files = e.target.files;
+    const previewContainer = document.getElementById('imagePreview');
+
+    if (!previewContainer) {
+        // Create preview container if it doesn't exist
+        const preview = document.createElement('div');
+        preview.id = 'imagePreview';
+        preview.className = 'row mt-3';
+        e.target.parentNode.appendChild(preview);
+    }
+
+    // Clear previous previews
+    document.getElementById('imagePreview').innerHTML = '';
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-md-3 mb-2';
+                col.innerHTML = `
+                    <div class="card">
+                        <img src="${e.target.result}" class="card-img-top"
+                             style="height: 100px; object-fit: cover;" alt="Preview">
+                        <div class="card-body p-1">
+                            <small class="text-muted">${file.name}</small>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('imagePreview').appendChild(col);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+});
+</script>
+{% endblock %}

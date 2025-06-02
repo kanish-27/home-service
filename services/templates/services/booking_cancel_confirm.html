@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Cancel Booking</h5>
+                </div>
+                <div class="card-body">
+                    {% if booking %}
+                        <div class="alert alert-warning">
+                            <h6>Booking Details:</h6>
+                            <p><strong>Service:</strong> {{ booking.service_name|default:"Unknown Service" }}</p>
+                            <p><strong>Amount:</strong> ₹{{ booking.total_amount|default:"0.00" }}</p>
+                            <p><strong>Status:</strong> {{ booking.status|title }}</p>
+                            {% if booking.booking_date %}
+                                <p><strong>Date:</strong> {{ booking.booking_date|date:"F d, Y" }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    <p class="text-danger"><strong>Are you sure you want to cancel this booking?</strong></p>
+                    <p class="text-muted">This action cannot be undone. Please provide a reason for cancellation.</p>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="cancellation_reason" class="form-label">Reason for Cancellation <span class="text-danger">*</span></label>
+                            <select class="form-control mb-2" id="cancellation_reason_select" onchange="toggleOtherReason()">
+                                <option value="">Select a reason...</option>
+                                <option value="Change of plans">Change of plans</option>
+                                <option value="Found alternative service">Found alternative service</option>
+                                <option value="Emergency situation">Emergency situation</option>
+                                <option value="Service no longer needed">Service no longer needed</option>
+                                <option value="Pricing concerns">Pricing concerns</option>
+                                <option value="other">Other (please specify)</option>
+                            </select>
+                            <textarea class="form-control" id="cancellation_reason" name="cancellation_reason" rows="3" placeholder="Please provide additional details..." style="display: none;"></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'services:booking_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Bookings
+                            </a>
+                            <button type="submit" class="btn btn-danger" id="confirmCancelBtn" disabled>
+                                <i class="fas fa-times me-1"></i> Confirm Cancellation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleOtherReason() {
+    const select = document.getElementById('cancellation_reason_select');
+    const textarea = document.getElementById('cancellation_reason');
+    const confirmBtn = document.getElementById('confirmCancelBtn');
+
+    if (select.value === 'other') {
+        textarea.style.display = 'block';
+        textarea.required = true;
+        textarea.focus();
+        textarea.value = '';
+    } else {
+        textarea.style.display = 'none';
+        textarea.required = false;
+        textarea.value = select.value;
+    }
+
+    // Enable/disable confirm button
+    confirmBtn.disabled = !select.value;
+}
+
+// Update textarea when select changes
+document.getElementById('cancellation_reason_select').addEventListener('change', function() {
+    const textarea = document.getElementById('cancellation_reason');
+    if (this.value !== 'other' && this.value !== '') {
+        textarea.value = this.value;
+    }
+});
+
+// Validate form before submission
+document.querySelector('form').addEventListener('submit', function(e) {
+    const select = document.getElementById('cancellation_reason_select');
+    const textarea = document.getElementById('cancellation_reason');
+
+    if (!select.value) {
+        e.preventDefault();
+        alert('Please select a reason for cancellation.');
+        return false;
+    }
+
+    if (select.value === 'other' && !textarea.value.trim()) {
+        e.preventDefault();
+        alert('Please provide details for the cancellation reason.');
+        textarea.focus();
+        return false;
+    }
+
+    // Confirm cancellation
+    if (!confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Successful - HomeService{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Success Message -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center py-5">
+                    <div class="success-icon mb-4">
+                        <i class="fas fa-check-circle fa-5x text-success"></i>
+                    </div>
+                    <h2 class="text-success mb-3">Payment Successful!</h2>
+                    <p class="lead mb-4">Your payment has been processed successfully. Your booking is now awaiting admin approval.</p>
+                    
+                    {% if payment %}
+                    <div class="alert alert-success">
+                        <strong>Transaction ID:</strong> {{ payment.transaction_id }}<br>
+                        <strong>Amount Paid:</strong> ₹{{ payment.amount|floatformat:2 }}<br>
+                        <strong>Payment Method:</strong> {{ payment.get_payment_method_display }}<br>
+                        <strong>Payment Date:</strong> {{ payment.paid_at|date:"M d, Y g:i A" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Booking Details -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-calendar-check me-2"></i>Booking Details
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Service Information</h6>
+                            <p><strong>Service:</strong> {{ booking.service.name|default:"Service Name" }}</p>
+                            <p><strong>Provider:</strong> {{ booking.provider.get_full_name|default:"Provider Name" }}</p>
+                            <p><strong>Date & Time:</strong> {{ booking.booking_date|date:"M d, Y g:i A" }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-warning">{{ booking.get_status_display }}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Customer Information</h6>
+                            <p><strong>Name:</strong> {{ booking.customer.get_full_name|default:booking.customer.email }}</p>
+                            <p><strong>Phone:</strong> {{ booking.phone_number|default:"Not provided" }}</p>
+                            <p><strong>Address:</strong> {{ booking.address|default:"Not provided" }}</p>
+                            {% if booking.special_instructions %}
+                            <p><strong>Special Instructions:</strong> {{ booking.special_instructions }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-list-ol me-2"></i>What Happens Next?
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker bg-success">
+                                <i class="fas fa-check text-white"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Payment Completed</h6>
+                                <p class="text-muted">Your payment has been successfully processed.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item active">
+                            <div class="timeline-marker bg-warning">
+                                <i class="fas fa-clock text-white"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Admin Review</h6>
+                                <p class="text-muted">Our admin team will review and approve your booking within 24 hours.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-secondary">
+                                <i class="fas fa-envelope text-white"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Confirmation & Invoice</h6>
+                                <p class="text-muted">Once approved, you'll receive an invoice with a QR code for service access.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-secondary">
+                                <i class="fas fa-tools text-white"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Service Delivery</h6>
+                                <p class="text-muted">The service provider will contact you and deliver the service as scheduled.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Information -->
+            <div class="alert alert-info">
+                <h5><i class="fas fa-info-circle me-2"></i>Important Information</h5>
+                <ul class="mb-0">
+                    <li>Your booking is currently <strong>pending admin approval</strong></li>
+                    <li>You will receive email notifications about booking status updates</li>
+                    <li>Once approved, an invoice with QR code will be generated for service access</li>
+                    <li>The service provider will contact you before the scheduled date</li>
+                    <li>You can track your booking status in your dashboard</li>
+                </ul>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'user_dashboard' %}" class="btn btn-primary w-100">
+                        <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'services:booking_list' %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-list me-2"></i>My Bookings
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'services:service_list' %}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-search me-2"></i>Browse More Services
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+.success-icon {
+    animation: checkmark 0.6s ease-in-out;
+}
+
+@keyframes checkmark {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.timeline-content {
+    padding-left: 20px;
+}
+
+.timeline-item.completed .timeline-marker {
+    background-color: #28a745 !important;
+}
+
+.timeline-item.active .timeline-marker {
+    background-color: #ffc107 !important;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+    }
+}
+</style>
+{% endblock %}

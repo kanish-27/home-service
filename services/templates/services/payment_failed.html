@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Failed - HomeService{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Failed Message -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center py-5">
+                    <div class="error-icon mb-4">
+                        <i class="fas fa-times-circle fa-5x text-danger"></i>
+                    </div>
+                    <h2 class="text-danger mb-3">Payment Failed</h2>
+                    <p class="lead mb-4">We're sorry, but your payment could not be processed. Please try again or use a different payment method.</p>
+                    
+                    <div class="alert alert-danger">
+                        <strong>Don't worry!</strong> Your booking has been saved and no charges have been made to your account.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Details -->
+            {% if booking %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-calendar-check me-2"></i>Booking Details
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Service Information</h6>
+                            <p><strong>Service:</strong> {{ booking.service.name|default:"Service Name" }}</p>
+                            <p><strong>Provider:</strong> {{ booking.provider.get_full_name|default:"Provider Name" }}</p>
+                            <p><strong>Date & Time:</strong> {{ booking.booking_date|date:"M d, Y g:i A" }}</p>
+                            <p><strong>Amount:</strong> ₹{{ booking.total_amount|floatformat:2 }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Customer Information</h6>
+                            <p><strong>Name:</strong> {{ booking.customer.get_full_name|default:booking.customer.email }}</p>
+                            <p><strong>Phone:</strong> {{ booking.phone_number|default:"Not provided" }}</p>
+                            <p><strong>Address:</strong> {{ booking.address|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Common Reasons -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i>Common Reasons for Payment Failure
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Insufficient balance in account
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Card expired or blocked
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Incorrect card details
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Bank server temporarily down
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Transaction limit exceeded
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Network connectivity issues
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    OTP not entered correctly
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Payment gateway timeout
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- What to do next -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>What You Can Do
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-primary h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-redo fa-3x text-primary mb-3"></i>
+                                    <h5>Try Again</h5>
+                                    <p class="text-muted">Retry the payment with the same or different payment method</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-success h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-credit-card fa-3x text-success mb-3"></i>
+                                    <h5>Different Method</h5>
+                                    <p class="text-muted">Use a different payment method like UPI, Net Banking, or Card</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row">
+                {% if booking %}
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'services:payment' booking.id %}" class="btn btn-primary w-100">
+                        <i class="fas fa-redo me-2"></i>Try Payment Again
+                    </a>
+                </div>
+                {% endif %}
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'user_dashboard' %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'contact' %}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-headset me-2"></i>Contact Support
+                    </a>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="alert alert-info">
+                <h5><i class="fas fa-info-circle me-2"></i>Need Help?</h5>
+                <p class="mb-2">If you continue to face issues with payment, please contact our support team:</p>
+                <ul class="mb-0">
+                    <li><strong>Email:</strong> kanishkrishna.jp2024@cse.ac.in</li>
+                    <li><strong>Phone:</strong> +91 7708750455</li>
+                    <li><strong>Support Hours:</strong> 9 AM - 8 PM (Mon-Sat)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+.error-icon {
+    animation: shake 0.6s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

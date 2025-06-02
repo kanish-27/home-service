@@ -1,0 +1,129 @@
+{% extends 'admin/base.html' %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-1">Booking Details</h2>
+            <p class="text-muted mb-0">BK-{{ booking.id|stringformat:"06d" }}</p>
+        </div>
+        <a href="{% url 'services:admin_bookings' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Bookings
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="admin-card">
+            <div class="card-header bg-transparent border-0 p-4">
+                <h5 class="mb-0">Booking Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Service Details</h6>
+                        <p><strong>Service:</strong> {{ booking.service.name }}</p>
+                        <p><strong>Category:</strong> {{ booking.service.category.name }}</p>
+                        <p><strong>Price:</strong> ₹{{ booking.service.price }}</p>
+                        <p><strong>Duration:</strong> {{ booking.service.duration }} hours</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Customer Information</h6>
+                        <p><strong>Name:</strong> {{ booking.customer.get_full_name|default:"N/A" }}</p>
+                        <p><strong>Email:</strong> {{ booking.customer.email }}</p>
+                        <p><strong>Phone:</strong> {{ booking.phone_number|default:"Not provided" }}</p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Booking Schedule</h6>
+                        <p><strong>Date:</strong> {{ booking.booking_date|date:"F d, Y" }}</p>
+                        <p><strong>Time:</strong> {{ booking.booking_date|time:"g:i A" }}</p>
+                        {% if booking.start_time and booking.end_time %}
+                            <p><strong>Duration:</strong> {{ booking.start_time|time:"g:i A" }} - {{ booking.end_time|time:"g:i A" }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Payment Information</h6>
+                        <p><strong>Total Amount:</strong> ₹{{ booking.total_amount|default:booking.service.price }}</p>
+                        <p><strong>Payment Status:</strong> 
+                            {% if booking.is_paid %}
+                                <span class="badge bg-success">Paid</span>
+                            {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% endif %}
+                        </p>
+                        {% if booking.payment_intent_id %}
+                            <p><strong>Payment ID:</strong> {{ booking.payment_intent_id }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if booking.special_instructions %}
+                <hr>
+                <h6>Special Instructions</h6>
+                <p>{{ booking.special_instructions }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="admin-card">
+            <div class="card-header bg-transparent border-0 p-4">
+                <h5 class="mb-0">Update Status</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Current Status</label>
+                        <div>
+                            <span class="status-badge status-{{ booking.status }}">
+                                {{ booking.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Update Status</label>
+                        <select name="status" id="status" class="form-control">
+                            {% for value, label in booking.STATUS_CHOICES %}
+                                <option value="{{ value }}" {% if booking.status == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-admin w-100">
+                        <i class="fas fa-save me-2"></i>Update Status
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="admin-card mt-4">
+            <div class="card-header bg-transparent border-0 p-4">
+                <h5 class="mb-0">Provider Information</h5>
+            </div>
+            <div class="card-body">
+                {% if booking.provider %}
+                    <p><strong>Name:</strong> {{ booking.provider.get_full_name|default:booking.provider.email }}</p>
+                    <p><strong>Email:</strong> {{ booking.provider.email }}</p>
+                    {% if booking.provider.provider_profile %}
+                        <p><strong>Company:</strong> {{ booking.provider.provider_profile.company_name|default:"N/A" }}</p>
+                        <p><strong>Phone:</strong> {{ booking.provider.provider_profile.phone_number|default:"N/A" }}</p>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted">No provider assigned</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
