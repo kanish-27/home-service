@@ -1,0 +1,97 @@
+.rating-progress {
+    height: 8px;
+    background-color: #f8f9fa;
+}
+
+.rating-progress .progress-bar {
+    background-color: #ffc107;
+    transition: width 0.3s ease-in-out;
+}
+
+.rating-stats {
+    margin-bottom: 1rem;
+}
+
+.rating-stats .progress {
+    height: 8px;
+}
+
+.rating-stats .progress-bar {
+    background-color: #ffc107;
+}
+
+.rating-stats .rating-number {
+    min-width: 24px;
+    text-align: right;
+}
+
+.rating-stats .rating-count {
+    min-width: 60px;
+    text-align: left;
+}
+
+/* Fix for carousel images */
+.carousel-item {
+    height: 100%;
+}
+
+.carousel-item img {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+
+/* Fix for modal content */
+.modal-content .rounded-circle {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+}
+
+/* Fix for review list */
+.reviews-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Fix for service cards */
+.service-card {
+    height: 100%;
+}
+
+.service-card .card-body {
+    padding: 0.75rem;
+}
+
+.service-card .card-title {
+    margin-bottom: 0.5rem;
+}
+
+.service-card .card-text {
+    margin-bottom: 0.5rem;
+}
+
+/* Fix for sticky booking card */
+.sticky-booking-card {
+    position: sticky;
+    top: 20px;
+}
+
+/* Fix for sharing buttons */
+.share-buttons .btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Fix for star ratings */
+.star-rating {
+    color: #ffc107;
+}
+
+.star-rating i {
+    margin-right: 2px;
+}

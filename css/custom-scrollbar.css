@@ -1,0 +1,228 @@
+/* Custom Black Scrollbar Styles */
+
+/* Main scrollbar for the entire page */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+    box-shadow: inset 0 0 2px rgba(0,0,0,0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+    box-shadow: 0 0 4px rgba(0,0,0,0.4);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: #f8f9fa;
+}
+
+::-webkit-scrollbar-corner {
+    background: #f1f1f1;
+}
+
+/* Firefox scrollbar */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: #ffffff #f1f1f1;
+}
+
+/* Thin scrollbar variant */
+.scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #ffffff;
+    border-radius: 4px;
+    border: 1px solid #f8f9fa;
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #f8f9fa;
+    box-shadow: 0 0 4px rgba(0,0,0,0.4);
+}
+
+/* Dark theme scrollbar */
+@media (prefers-color-scheme: dark) {
+    ::-webkit-scrollbar-track {
+        background: #2d2d2d;
+        box-shadow: inset 0 0 2px rgba(255,255,255,0.1);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #000000 0%, #333333 100%);
+        border: 2px solid #2d2d2d;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #333333 0%, #555555 100%);
+    }
+    
+    ::-webkit-scrollbar-corner {
+        background: #2d2d2d;
+    }
+    
+    html {
+        scrollbar-color: #000000 #2d2d2d;
+    }
+}
+
+/* Scrollbar for specific containers */
+.table-responsive::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #000000;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+}
+
+/* Modal scrollbar */
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #000000;
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+}
+
+/* Sidebar scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.3);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.5);
+}
+
+/* Card body scrollbar */
+.card-body.scrollable::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.card-body.scrollable::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 3px;
+}
+
+.card-body.scrollable::-webkit-scrollbar-thumb {
+    background: #000000;
+    border-radius: 3px;
+}
+
+.card-body.scrollable::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+}
+
+/* Dropdown scrollbar */
+.dropdown-menu::-webkit-scrollbar {
+    width: 4px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+    background: #000000;
+    border-radius: 2px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+}
+
+/* Custom utility classes */
+.scrollbar-white {
+    scrollbar-width: thin;
+    scrollbar-color: #ffffff #f1f1f1;
+}
+
+.scrollbar-white::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.scrollbar-white::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.scrollbar-white::-webkit-scrollbar-thumb {
+    background: #ffffff;
+    border-radius: 4px;
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+.scrollbar-white::-webkit-scrollbar-thumb:hover {
+    background: #f8f9fa;
+    box-shadow: 0 0 4px rgba(0,0,0,0.4);
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+}
+
+/* Animated scrollbar */
+.scrollbar-animated::-webkit-scrollbar-thumb {
+    transition: background-color 0.3s ease;
+}
+
+.scrollbar-animated::-webkit-scrollbar-thumb:hover {
+    transition: background-color 0.2s ease;
+}

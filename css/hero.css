@@ -1,0 +1,41 @@
+.hero-section {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.illustration-container {
+    position: relative;
+    height: 400px;
+}
+
+.illustration-element {
+    width: 240px;
+    height: 240px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+@media (max-width: 991.98px) {
+    .illustration-container {
+        height: 300px;
+    }
+    
+    .illustration-element {
+        width: 200px;
+        height: 200px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .illustration-container {
+        height: auto;
+        margin-top: 30px;
+    }
+    
+    .illustration-element {
+        width: 160px;
+        height: 160px;
+    }
+}

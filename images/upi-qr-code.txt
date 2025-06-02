@@ -1,0 +1,7 @@
+This file is a placeholder for the UPI QR code image.
+The actual QR code image should be saved as: homeservice/static/images/upi-qr-code.png
+
+QR Code Details:
+- Name: Kanish Krishna J P
+- UPI ID: kanishnithya06@okaxis
+- Purpose: Payment for HomeService bookings
